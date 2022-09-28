@@ -1,0 +1,9 @@
+[workspace]
+
+members = [
+    "lib",
+
+    "bld-tools",
+    "fmc",
+    "method-gen",
+]
