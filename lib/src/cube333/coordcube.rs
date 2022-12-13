@@ -2,13 +2,13 @@ use super::coordinate::Coordinate;
 use super::moves::Htm;
 use super::CubieCube;
 
-#[derive(Debug, Default, PartialEq, Copy, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
 pub struct COCoord(u16);
-#[derive(Debug, Default, PartialEq, Copy, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
 pub struct CPCoord(u16);
-#[derive(Debug, Default, PartialEq, Copy, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
 pub struct EOCoord(u16);
-#[derive(Debug, Default, PartialEq, Copy, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
 pub struct EPCoord(u32);
 
 impl From<COCoord> for usize {
@@ -34,15 +34,15 @@ impl From<EPCoord> for usize {
 
 impl Coordinate for COCoord {
     type Generator = Htm;
-    // 3^7
-    const SIZE: usize = 2187;
+    // 4^7
+    const SIZE: usize = 16384;
 
     fn from_cubie_cube(cube: &CubieCube) -> Self {
         let mut co: u16 = 0;
-        for i in cube.co {
-            co += i as u16;
-
+        for i in cube.co.into_iter().take(7) {
             co <<= 2;
+
+            co += i as u16;
         }
 
         COCoord(co)
@@ -53,7 +53,7 @@ impl Coordinate for COCoord {
 
         let mut co = [0; 8];
         let mut sum = 0;
-        for co in co.iter_mut().take(7) {
+        for co in co.iter_mut().rev().skip(1).take(7) {
             let digit = (coord & 3) as u8;
             *co = digit;
             sum += digit;
@@ -62,15 +62,18 @@ impl Coordinate for COCoord {
         co[7] = sum % 3;
         CubieCube {
             co,
-            cp: [0; 8],
-            eo: [0; 12],
-            ep: [0; 12],
+            ..CubieCube::solved()
         }
+    }
+
+    fn solved(&self) -> bool {
+        self.0 == 0
     }
 }
 
 impl Coordinate for CPCoord {
     type Generator = Htm;
+    // why is it /2 whaa
     // 8!/2
     const SIZE: usize = 20160;
 
@@ -98,11 +101,13 @@ impl Coordinate for CPCoord {
             cpcord /= (index + 1) as u16;
         }
         CubieCube {
-            co: [0; 8],
             cp,
-            eo: [0; 12],
-            ep: [0; 12],
+            ..CubieCube::solved()
         }
+    }
+
+    fn solved(&self) -> bool {
+        self.0 == 0
     }
 }
 
@@ -113,10 +118,9 @@ impl Coordinate for EOCoord {
 
     fn from_cubie_cube(cube: &CubieCube) -> Self {
         let mut eo: u16 = 0;
-        for i in cube.eo {
-            eo += i as u16;
-
+        for i in cube.eo.into_iter().take(11) {
             eo <<= 1;
+            eo += i as u16;
         }
 
         EOCoord(eo)
@@ -127,7 +131,7 @@ impl Coordinate for EOCoord {
 
         let mut eo = [0; 12];
         let mut sum = 0;
-        for eo in eo.iter_mut().take(11) {
+        for eo in eo.iter_mut().rev().skip(1).take(11) {
             let digit = (coord & 1) as u8;
             *eo = digit;
             sum += digit;
@@ -135,11 +139,13 @@ impl Coordinate for EOCoord {
         }
         eo[11] = sum % 2;
         CubieCube {
-            co: [0; 8],
-            cp: [0; 8],
             eo,
-            ep: [0; 12],
+            ..CubieCube::solved()
         }
+    }
+
+    fn solved(&self) -> bool {
+        self.0 == 0
     }
 }
 
@@ -171,15 +177,17 @@ impl Coordinate for EPCoord {
         }
 
         CubieCube {
-            co: [0; 8],
-            cp: [0; 8],
-            eo: [0; 12],
             ep,
+            ..CubieCube::solved()
         }
+    }
+
+    fn solved(&self) -> bool {
+        self.0 == 0
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct CoordCube {
     pub co: COCoord,
     pub cp: CPCoord,

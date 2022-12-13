@@ -13,5 +13,9 @@ pub trait Coordinate: Into<usize> + Default + Sized + Copy + Clone {
     fn from_cubie_cube(cube: &CubieCube) -> Self;
     /// Generate an arbitrary [`CubieCube`] which has the property defined by the coordinate. Any
     /// non specified property will not have a defined output.
+    /// Note: this new cube state does not have to be a legal cube state overall, just a legal cube
+    /// state when concerning the coordinate.
     fn to_cubie_cube(&self) -> CubieCube;
+    /// Returns true if the coordinate is the same as the coordinate on a solved cube.
+    fn solved(&self) -> bool;
 }
