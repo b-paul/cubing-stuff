@@ -1,6 +1,33 @@
 use super::coordinate::Coordinate;
 use super::CubieCube;
 
+#[derive(Debug, Clone, Copy)]
+pub enum MoveType {
+    R,
+    L,
+    U,
+    D,
+    F,
+    B,
+}
+
+#[derive(Copy, Clone)]
+pub struct Move {
+    ty: MoveType,
+    count: u8,
+}
+
+// I don't want to have the default derive debug for this!
+impl std::fmt::Debug for Move {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.count {
+            1 => write!(f, "{:?}", self.ty),
+            3 => write!(f, "{:?}'", self.ty),
+            _ => write!(f, "{:?}{}", self.ty, self.count),
+        }
+    }
+}
+
 pub trait MoveGenerator {
     /// The amount of moves that are available in the moveset.
     const SIZE: usize;
@@ -11,6 +38,7 @@ pub trait MoveGenerator {
 
 // we want the operation MoveTable[Coordinate][Move]
 // Indexing by coordinate first is probably better for cache locality or something
+// I dont like how there is potential for user error in this api if they get csize or gensize wrong
 pub struct MoveTable<C: Coordinate, const CSIZE: usize, const GENSIZE: usize>(
     [[C; GENSIZE]; CSIZE],
 );
@@ -37,21 +65,20 @@ impl<C: Coordinate, const CSIZE: usize, const GENSIZE: usize> MoveTable<C, CSIZE
         }
         MoveTable(table)
     }
-}
 
-#[derive(Copy, Clone)]
-pub struct Move {
-    ty: MoveType,
-    count: u8,
+    pub fn apply_move(&self, input: C, mv: Move) -> C {
+        // :( why does it have to be usize::from :(
+        self.0[input.into()][usize::from(mv)]
+    }
 }
 
 impl From<Move> for usize {
     fn from(mv: Move) -> usize {
-        mv.count as usize * 6 + mv.ty as usize
+        (mv.count as usize - 1) * 6 + mv.ty as usize
     }
 }
 
-macro_rules! make_move {
+macro_rules! mv {
     ($ty:ident, $count: expr) => {
         Move {
             ty: MoveType::$ty,
@@ -65,35 +92,25 @@ pub struct Htm;
 impl MoveGenerator for Htm {
     const SIZE: usize = 18;
     const MOVE_LIST: &'static [Move] = &[
-        make_move!(R, 1),
-        make_move!(L, 1),
-        make_move!(U, 1),
-        make_move!(D, 1),
-        make_move!(F, 1),
-        make_move!(B, 1),
-        make_move!(R, 2),
-        make_move!(L, 2),
-        make_move!(U, 2),
-        make_move!(D, 2),
-        make_move!(F, 2),
-        make_move!(B, 2),
-        make_move!(R, 3),
-        make_move!(L, 3),
-        make_move!(U, 3),
-        make_move!(D, 3),
-        make_move!(F, 3),
-        make_move!(B, 3),
+        mv!(R, 1),
+        mv!(L, 1),
+        mv!(U, 1),
+        mv!(D, 1),
+        mv!(F, 1),
+        mv!(B, 1),
+        mv!(R, 2),
+        mv!(L, 2),
+        mv!(U, 2),
+        mv!(D, 2),
+        mv!(F, 2),
+        mv!(B, 2),
+        mv!(R, 3),
+        mv!(L, 3),
+        mv!(U, 3),
+        mv!(D, 3),
+        mv!(F, 3),
+        mv!(B, 3),
     ];
-}
-
-#[derive(Clone, Copy)]
-pub enum MoveType {
-    R,
-    L,
-    U,
-    D,
-    F,
-    B,
 }
 
 impl From<MoveType> for usize {
@@ -143,6 +160,7 @@ const EP_OFFSETS: [[usize; 12]; 6] = [
 ];
 
 impl CubieCube {
+    // This function doesn't really need to be fast since coordinates exist
     pub fn make_move(&self, mv: Move) -> CubieCube {
         let mut r = self.clone();
         for _ in 0..mv.count {
@@ -179,6 +197,7 @@ impl CubieCube {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cube333::coordcube::*;
     #[test]
     fn r_loop() {
         let mut cube = CubieCube {
@@ -202,5 +221,20 @@ mod tests {
                 ep: [0; 12],
             }
         );
+    }
+
+    #[test]
+    fn move_table() {
+        let eo_move_table = MoveTable::<EOCoord, 2048, 18>::gen();
+        let solved = EOCoord::from_cubie_cube(&CubieCube::solved());
+        let f = eo_move_table.apply_move(solved, mv!(F, 1));
+        assert_ne!(solved, f);
+        assert_eq!(solved, eo_move_table.apply_move(f, mv!(F, 3)));
+
+        let co_move_table = MoveTable::<COCoord, 16384, 18>::gen();
+        let solved = COCoord::from_cubie_cube(&CubieCube::solved());
+        let f = co_move_table.apply_move(solved, mv!(F, 1));
+        assert_ne!(solved, f);
+        assert_eq!(solved, co_move_table.apply_move(f, mv!(F, 3)));
     }
 }
