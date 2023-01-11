@@ -1,5 +1,3 @@
-use super::coordinate::Coordinate;
-use super::moves::Htm;
 use super::CubieCube;
 
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
@@ -32,160 +30,6 @@ impl From<EPCoord> for usize {
     }
 }
 
-impl Coordinate for COCoord {
-    type Generator = Htm;
-    // 4^7
-    const SIZE: usize = 16384;
-
-    fn from_cubie_cube(cube: &CubieCube) -> Self {
-        let mut co: u16 = 0;
-        for i in cube.co.into_iter().take(7) {
-            co <<= 2;
-
-            co += i as u16;
-        }
-
-        COCoord(co)
-    }
-
-    fn to_cubie_cube(&self) -> CubieCube {
-        let mut coord = self.0;
-
-        let mut co = [0; 8];
-        let mut sum = 0;
-        for co in co.iter_mut().rev().skip(1).take(7) {
-            let digit = (coord & 3) as u8;
-            *co = digit;
-            sum += digit;
-            coord >>= 2;
-        }
-        co[7] = sum % 3;
-        CubieCube {
-            co,
-            ..CubieCube::solved()
-        }
-    }
-
-    fn solved(&self) -> bool {
-        self.0 == 0
-    }
-}
-
-impl Coordinate for CPCoord {
-    type Generator = Htm;
-    // why is it /2 whaa
-    // 8!/2
-    const SIZE: usize = 20160;
-
-    fn from_cubie_cube(cube: &CubieCube) -> Self {
-        // Please please reimplement this!!! and EP as well
-        let mut cp: u16 = 0;
-        let mut v = vec![0, 1, 2, 3, 4, 5, 6, 7];
-
-        for index in (0..8).rev() {
-            let pos = v.iter().position(|&r| r == cube.cp[index] as u16).unwrap() as u16;
-            cp += pos;
-            v.remove(pos as usize);
-            cp *= (index + 1) as u16;
-        }
-
-        CPCoord(cp)
-    }
-
-    fn to_cubie_cube(&self) -> CubieCube {
-        let mut cp: [u8; 8] = [0; 8];
-        let mut cpcord = self.0;
-        let mut v: Vec<usize> = (0..8).collect();
-        for index in (0..8).rev() {
-            cp[index] = v.remove(cpcord as usize % (index + 1)) as u8;
-            cpcord /= (index + 1) as u16;
-        }
-        CubieCube {
-            cp,
-            ..CubieCube::solved()
-        }
-    }
-
-    fn solved(&self) -> bool {
-        self.0 == 0
-    }
-}
-
-impl Coordinate for EOCoord {
-    type Generator = Htm;
-    // 2^11
-    const SIZE: usize = 2048;
-
-    fn from_cubie_cube(cube: &CubieCube) -> Self {
-        let mut eo: u16 = 0;
-        for i in cube.eo.into_iter().take(11) {
-            eo <<= 1;
-            eo += i as u16;
-        }
-
-        EOCoord(eo)
-    }
-
-    fn to_cubie_cube(&self) -> CubieCube {
-        let mut coord = self.0;
-
-        let mut eo = [0; 12];
-        let mut sum = 0;
-        for eo in eo.iter_mut().rev().skip(1).take(11) {
-            let digit = (coord & 1) as u8;
-            *eo = digit;
-            sum += digit;
-            coord >>= 1;
-        }
-        eo[11] = sum % 2;
-        CubieCube {
-            eo,
-            ..CubieCube::solved()
-        }
-    }
-
-    fn solved(&self) -> bool {
-        self.0 == 0
-    }
-}
-
-impl Coordinate for EPCoord {
-    type Generator = Htm;
-    // 12!/2
-    const SIZE: usize = 239500800;
-
-    fn from_cubie_cube(cube: &CubieCube) -> Self {
-        let mut ep: u32 = 0;
-        let mut v = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-
-        for index in (0..12).rev() {
-            let pos = v.iter().position(|&r| r == cube.ep[index] as u16).unwrap() as u32;
-            ep += pos;
-            v.remove(pos as usize);
-            ep *= (index + 1) as u32;
-        }
-        EPCoord(ep)
-    }
-
-    fn to_cubie_cube(&self) -> CubieCube {
-        let mut ep: [u8; 12] = [0; 12];
-        let mut epcord = self.0;
-        let mut v: Vec<usize> = (0..12).collect();
-        for index in (0..12).rev() {
-            ep[index] = v.remove(epcord as usize % (index + 1)) as u8;
-            epcord /= (index + 1) as u32;
-        }
-
-        CubieCube {
-            ep,
-            ..CubieCube::solved()
-        }
-    }
-
-    fn solved(&self) -> bool {
-        self.0 == 0
-    }
-}
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct CoordCube {
@@ -197,11 +41,7 @@ pub struct CoordCube {
 
 impl CoordCube {
     pub fn to_cubie(&self) -> CubieCube {
-        let co: [u8; 8] = self.co.to_cubie_cube().co;
-        let cp: [u8; 8] = self.cp.to_cubie_cube().cp;
-        let eo: [u8; 12] = self.eo.to_cubie_cube().eo;
-        let ep: [u8; 12] = self.ep.to_cubie_cube().ep;
-        CubieCube { co, cp, eo, ep }
+        todo!()
     }
 
     pub fn solved() -> Self {
@@ -216,12 +56,7 @@ impl CoordCube {
 
 impl CubieCube {
     pub fn to_coord(&self) -> CoordCube {
-        let co = COCoord::from_cubie_cube(self);
-        let cp = CPCoord::from_cubie_cube(self);
-        let eo = EOCoord::from_cubie_cube(self);
-        let ep = EPCoord::from_cubie_cube(self);
-
-        CoordCube { co, cp, eo, ep }
+        todo!()
     }
 }
 
@@ -232,6 +67,27 @@ mod tests {
     fn invert_identity() {
         let identity = CoordCube::solved();
         assert_eq!(identity, identity.to_cubie().to_coord())
+    }
+
+    use crate::cube333::moves::{Move, MoveGenerator};
+    use proptest::strategy::{Strategy, ValueTree};
+    use proptest::test_runner::TestRunner;
+    #[test]
+    fn moves_work() {
+        // proptest
+        let mut runner = TestRunner::default();
+        for _ in 0..256 {
+            let mut mvs = vec![];
+            for _ in 0..25 {
+                let val = (0..18usize).new_tree(&mut runner).unwrap();
+                let mv = Htm::MOVE_LIST[val.current()];
+                mvs.push(mv);
+            }
+            println!("{:?}", mvs);
+            // Now we want to apply the sequence of moves to a cubiecube and a coordinatecube made
+            // from that cubie cube, then convert the resulting coordinatecube into a cubiecube and
+            // check if the two cubiecubes are the same
+        }
     }
 }
 

@@ -1,7 +1,6 @@
 // Cube333 module
 
 pub mod coordcube;
-pub mod coordinate;
 pub mod moves;
 pub mod solver;
 

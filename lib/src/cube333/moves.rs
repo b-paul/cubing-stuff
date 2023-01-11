@@ -1,4 +1,3 @@
-use super::coordinate::Coordinate;
 use super::CubieCube;
 
 #[derive(Debug, Clone, Copy)]
@@ -34,42 +33,6 @@ pub trait MoveGenerator {
     /// A list of all valid moves. The index of a move in this list will be the same index used
     /// when accessing the move table.
     const MOVE_LIST: &'static [Move];
-}
-
-// we want the operation MoveTable[Coordinate][Move]
-// Indexing by coordinate first is probably better for cache locality or something
-// I dont like how there is potential for user error in this api if they get csize or gensize wrong
-pub struct MoveTable<C: Coordinate, const CSIZE: usize, const GENSIZE: usize>(
-    [[C; GENSIZE]; CSIZE],
-);
-
-impl<C: Coordinate, const CSIZE: usize, const GENSIZE: usize> MoveTable<C, CSIZE, GENSIZE> {
-    /// Generate a move table for a coordinate type.
-    pub fn gen() -> MoveTable<C, { CSIZE }, { GENSIZE }> {
-        // DFS or something
-        let mut visited = [false; CSIZE];
-        let mut table = [[C::default(); GENSIZE]; CSIZE];
-        let mut search_stack = vec![C::from_cubie_cube(&CubieCube::solved())];
-        while let Some(cur_coord) = search_stack.pop() {
-            if visited[cur_coord.into()] {
-                continue;
-            }
-            visited[cur_coord.into()] = true;
-            let cube = cur_coord.to_cubie_cube();
-            for mv in C::Generator::MOVE_LIST {
-                let new_cube = cube.make_move(*mv);
-                let new_coord = C::from_cubie_cube(&new_cube);
-                table[cur_coord.into()][usize::from(*mv)] = new_coord;
-                search_stack.push(new_coord);
-            }
-        }
-        MoveTable(table)
-    }
-
-    pub fn apply_move(&self, input: C, mv: Move) -> C {
-        // :( why does it have to be usize::from :(
-        self.0[input.into()][usize::from(mv)]
-    }
 }
 
 impl From<Move> for usize {
