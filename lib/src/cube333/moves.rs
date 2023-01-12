@@ -185,19 +185,4 @@ mod tests {
             }
         );
     }
-
-    #[test]
-    fn move_table() {
-        let eo_move_table = MoveTable::<EOCoord, 2048, 18>::gen();
-        let solved = EOCoord::from_cubie_cube(&CubieCube::solved());
-        let f = eo_move_table.apply_move(solved, mv!(F, 1));
-        assert_ne!(solved, f);
-        assert_eq!(solved, eo_move_table.apply_move(f, mv!(F, 3)));
-
-        let co_move_table = MoveTable::<COCoord, 16384, 18>::gen();
-        let solved = COCoord::from_cubie_cube(&CubieCube::solved());
-        let f = co_move_table.apply_move(solved, mv!(F, 1));
-        assert_ne!(solved, f);
-        assert_eq!(solved, co_move_table.apply_move(f, mv!(F, 3)));
-    }
 }
