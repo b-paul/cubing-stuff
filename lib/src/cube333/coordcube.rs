@@ -55,9 +55,9 @@ impl CoordCube {
 
 impl CubieCube {
     pub fn to_coord(&self) -> CoordCube {
-        let co = COCoord(Self::to_o_coord::<8, 3>(&self.co));
+        let co = COCoord(Self::to_o_coord::<8, 3>(&self.co.map(|n| n.into())));
         let cp = CPCoord(Self::to_p_coord::<8>(&self.cp) as u16);
-        let eo = EOCoord(Self::to_o_coord::<12, 2>(&self.eo));
+        let eo = EOCoord(Self::to_o_coord::<12, 2>(&self.eo.map(|n| n.into())));
         let ep = EPCoord(Self::to_p_coord::<12>(&self.ep));
 
         CoordCube { co, cp, eo, ep }

@@ -6,18 +6,18 @@ pub mod solver;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CubieCube {
-    pub co: [u8; 8],
+    pub co: [CornerTwist; 8],
     pub cp: [u8; 8],
-    pub eo: [u8; 12],
+    pub eo: [EdgeFlip; 12],
     pub ep: [u8; 12],
 }
 
 impl CubieCube {
     pub fn solved() -> Self {
         CubieCube {
-            co: [0; 8],
+            co: [CornerTwist::Oriented; 8],
             cp: Corners::ARRAY.map(|c| usize::from(c) as u8),
-            eo: [0; 12],
+            eo: [EdgeFlip::Oriented; 12],
             ep: Edges::ARRAY.map(|e| usize::from(e) as u8),
         }
     }
@@ -93,6 +93,68 @@ impl From<Edges> for usize {
             FL => 9,
             BL => 10,
             BR => 11,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum OrientationConversionError {
+    InvalidOrientationValue,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum CornerTwist {
+    Oriented,
+    Clockwise,
+    AntiClockwise,
+}
+
+impl From<CornerTwist> for u8 {
+    fn from(value: CornerTwist) -> Self {
+        match value {
+            CornerTwist::Oriented => 0,
+            CornerTwist::Clockwise => 1,
+            CornerTwist::AntiClockwise => 2,
+        }
+    }
+}
+
+impl TryFrom<u8> for CornerTwist {
+    type Error = OrientationConversionError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(CornerTwist::Oriented),
+            1 => Ok(CornerTwist::Clockwise),
+            2 => Ok(CornerTwist::AntiClockwise),
+            _ => Err(OrientationConversionError::InvalidOrientationValue),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum EdgeFlip {
+    Oriented,
+    Flipped,
+}
+
+impl From<EdgeFlip> for u8 {
+    fn from(value: EdgeFlip) -> Self {
+        match value {
+            EdgeFlip::Oriented => 0,
+            EdgeFlip::Flipped => 1,
+        }
+    }
+}
+
+impl TryFrom<u8> for EdgeFlip {
+    type Error = OrientationConversionError;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(EdgeFlip::Oriented),
+            1 => Ok(EdgeFlip::Flipped),
+            _ => Err(OrientationConversionError::InvalidOrientationValue),
         }
     }
 }

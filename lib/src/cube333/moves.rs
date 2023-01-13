@@ -138,20 +138,26 @@ impl CubieCube {
         let eo_offsets = EO_OFFSETS[mv as usize];
         let ep_offsets = EP_OFFSETS[mv as usize];
 
+        let selfco: [u8; 8] = self.co.map(|t| t.into());
+        let selfeo: [u8; 12] = self.eo.map(|t| t.into());
+
         let mut co = [0; 8];
         let mut cp = [0; 8];
         let mut eo = [0; 12];
         let mut ep = [0; 12];
 
         for i in 0..8 {
-            co[i] = (self.co[cp_offsets[i]] + co_offsets[i]) % 3;
+            co[i] = (selfco[cp_offsets[i]] + co_offsets[i]) % 3;
             cp[i] = self.cp[cp_offsets[i]];
         }
 
         for i in 0..12 {
-            eo[i] = (self.eo[ep_offsets[i]] + eo_offsets[i]) % 2;
+            eo[i] = (selfeo[ep_offsets[i]] + eo_offsets[i]) % 2;
             ep[i] = self.ep[ep_offsets[i]];
         }
+
+        let co = co.map(|n| n.try_into().unwrap());
+        let eo = eo.map(|n| n.try_into().unwrap());
 
         CubieCube { co, cp, eo, ep }
     }
@@ -164,9 +170,9 @@ mod tests {
     #[test]
     fn r_loop() {
         let mut cube = CubieCube {
-            co: [0; 8],
+            co: [CornerTwist::Oriented; 8],
             cp: [0; 8],
-            eo: [0; 12],
+            eo: [EdgeFlip::Oriented; 12],
             ep: [0; 12],
         };
         for _ in 0..4 {
@@ -178,9 +184,9 @@ mod tests {
         assert_eq!(
             cube,
             CubieCube {
-                co: [0; 8],
+                co: [CornerTwist::Oriented; 8],
                 cp: [0; 8],
-                eo: [0; 12],
+                eo: [EdgeFlip::Oriented; 12],
                 ep: [0; 12],
             }
         );
