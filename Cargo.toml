@@ -3,6 +3,5 @@
 members = [
     "lib",
 
-    "fmc",
     "fmc-trainers",
 ]
