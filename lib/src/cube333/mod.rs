@@ -196,3 +196,212 @@ impl TryFrom<u8> for EdgeFlip {
         }
     }
 }
+
+pub struct StickerCube {
+    pub edges: [EdgePos; 24],
+    pub corners: [CornerPos; 24],
+    pub centers: [Sticker; 6],
+}
+
+impl StickerCube {
+    // :grimacing:
+    pub const SOLVED: StickerCube = StickerCube {
+        edges: [
+            EdgePos::UB,
+            EdgePos::UR,
+            EdgePos::UF,
+            EdgePos::UL,
+            EdgePos::LU,
+            EdgePos::LF,
+            EdgePos::LD,
+            EdgePos::LB,
+            EdgePos::FU,
+            EdgePos::FR,
+            EdgePos::FD,
+            EdgePos::FL,
+            EdgePos::RU,
+            EdgePos::RB,
+            EdgePos::RD,
+            EdgePos::RF,
+            EdgePos::BU,
+            EdgePos::BL,
+            EdgePos::BD,
+            EdgePos::BR,
+            EdgePos::DF,
+            EdgePos::DR,
+            EdgePos::DB,
+            EdgePos::DL,
+        ],
+        corners: [
+            CornerPos::UBL,
+            CornerPos::UBR,
+            CornerPos::UFR,
+            CornerPos::UFL,
+            CornerPos::LUB,
+            CornerPos::LUF,
+            CornerPos::LDF,
+            CornerPos::LDB,
+            CornerPos::FUL,
+            CornerPos::FUR,
+            CornerPos::FDR,
+            CornerPos::FDL,
+            CornerPos::RUF,
+            CornerPos::RUB,
+            CornerPos::RDB,
+            CornerPos::RDF,
+            CornerPos::BUR,
+            CornerPos::BUL,
+            CornerPos::BDL,
+            CornerPos::BDR,
+            CornerPos::DFR,
+            CornerPos::DBR,
+            CornerPos::DBL,
+            CornerPos::DFL,
+        ],
+        centers: [
+            Sticker::S1,
+            Sticker::S2,
+            Sticker::S3,
+            Sticker::S4,
+            Sticker::S5,
+            Sticker::S6,
+        ],
+    };
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum EdgePos {
+    UB,
+    UR,
+    UF,
+    UL,
+    LU,
+    LF,
+    LD,
+    LB,
+    FU,
+    FR,
+    FD,
+    FL,
+    RU,
+    RB,
+    RD,
+    RF,
+    BU,
+    BL,
+    BD,
+    BR,
+    DF,
+    DR,
+    DB,
+    DL,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum CornerPos {
+    UBL,
+    UBR,
+    UFR,
+    UFL,
+    LUB,
+    LUF,
+    LDF,
+    LDB,
+    FUL,
+    FUR,
+    FDR,
+    FDL,
+    RUF,
+    RUB,
+    RDB,
+    RDF,
+    BUR,
+    BUL,
+    BDL,
+    BDR,
+    DFR,
+    DBR,
+    DBL,
+    DFL,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Sticker {
+    /// U
+    S1,
+    /// L
+    S2,
+    /// F
+    S3,
+    /// R
+    S4,
+    /// B
+    S5,
+    /// D
+    S6,
+}
+
+impl From<EdgePos> for Sticker {
+    fn from(value: EdgePos) -> Self {
+        use EdgePos::*;
+        use Sticker::*;
+        match value {
+            UB => S1,
+            UR => S1,
+            UF => S1,
+            UL => S1,
+            LU => S2,
+            LF => S2,
+            LD => S2,
+            LB => S2,
+            FU => S3,
+            FR => S3,
+            FD => S3,
+            FL => S3,
+            RU => S4,
+            RB => S4,
+            RD => S4,
+            RF => S4,
+            BU => S5,
+            BL => S5,
+            BD => S5,
+            BR => S5,
+            DF => S6,
+            DR => S6,
+            DB => S6,
+            DL => S6,
+        }
+    }
+}
+impl From<CornerPos> for Sticker {
+    fn from(value: CornerPos) -> Self {
+        use CornerPos::*;
+        use Sticker::*;
+        match value {
+            UBL => S1,
+            UBR => S1,
+            UFR => S1,
+            UFL => S1,
+            LUB => S2,
+            LUF => S2,
+            LDF => S2,
+            LDB => S2,
+            FUL => S3,
+            FUR => S3,
+            FDR => S3,
+            FDL => S3,
+            RUF => S4,
+            RUB => S4,
+            RDB => S4,
+            RDF => S4,
+            BUR => S5,
+            BUL => S5,
+            BDL => S5,
+            BDR => S5,
+            DFR => S6,
+            DBR => S6,
+            DBL => S6,
+            DFL => S6,
+        }
+    }
+}
