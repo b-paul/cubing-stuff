@@ -198,8 +198,8 @@ impl TryFrom<u8> for EdgeFlip {
 }
 
 pub struct StickerCube {
-    pub edges: [EdgePos; 24],
-    pub corners: [CornerPos; 24],
+    pub edges: [Sticker; 24],
+    pub corners: [Sticker; 24],
     pub centers: [Sticker; 6],
 }
 
@@ -207,56 +207,56 @@ impl StickerCube {
     // :grimacing:
     pub const SOLVED: StickerCube = StickerCube {
         edges: [
-            EdgePos::UB,
-            EdgePos::UR,
-            EdgePos::UF,
-            EdgePos::UL,
-            EdgePos::LU,
-            EdgePos::LF,
-            EdgePos::LD,
-            EdgePos::LB,
-            EdgePos::FU,
-            EdgePos::FR,
-            EdgePos::FD,
-            EdgePos::FL,
-            EdgePos::RU,
-            EdgePos::RB,
-            EdgePos::RD,
-            EdgePos::RF,
-            EdgePos::BU,
-            EdgePos::BL,
-            EdgePos::BD,
-            EdgePos::BR,
-            EdgePos::DF,
-            EdgePos::DR,
-            EdgePos::DB,
-            EdgePos::DL,
+            Sticker::S1,
+            Sticker::S1,
+            Sticker::S1,
+            Sticker::S1,
+            Sticker::S2,
+            Sticker::S2,
+            Sticker::S2,
+            Sticker::S2,
+            Sticker::S3,
+            Sticker::S3,
+            Sticker::S3,
+            Sticker::S3,
+            Sticker::S4,
+            Sticker::S4,
+            Sticker::S4,
+            Sticker::S4,
+            Sticker::S5,
+            Sticker::S5,
+            Sticker::S5,
+            Sticker::S5,
+            Sticker::S6,
+            Sticker::S6,
+            Sticker::S6,
+            Sticker::S6,
         ],
         corners: [
-            CornerPos::UBL,
-            CornerPos::UBR,
-            CornerPos::UFR,
-            CornerPos::UFL,
-            CornerPos::LUB,
-            CornerPos::LUF,
-            CornerPos::LDF,
-            CornerPos::LDB,
-            CornerPos::FUL,
-            CornerPos::FUR,
-            CornerPos::FDR,
-            CornerPos::FDL,
-            CornerPos::RUF,
-            CornerPos::RUB,
-            CornerPos::RDB,
-            CornerPos::RDF,
-            CornerPos::BUR,
-            CornerPos::BUL,
-            CornerPos::BDL,
-            CornerPos::BDR,
-            CornerPos::DFR,
-            CornerPos::DBR,
-            CornerPos::DBL,
-            CornerPos::DFL,
+            Sticker::S1,
+            Sticker::S1,
+            Sticker::S1,
+            Sticker::S1,
+            Sticker::S2,
+            Sticker::S2,
+            Sticker::S2,
+            Sticker::S2,
+            Sticker::S3,
+            Sticker::S3,
+            Sticker::S3,
+            Sticker::S3,
+            Sticker::S4,
+            Sticker::S4,
+            Sticker::S4,
+            Sticker::S4,
+            Sticker::S5,
+            Sticker::S5,
+            Sticker::S5,
+            Sticker::S5,
+            Sticker::S6,
+            Sticker::S6,
+            Sticker::S6,
+            Sticker::S6,
         ],
         centers: [
             Sticker::S1,
@@ -267,6 +267,24 @@ impl StickerCube {
             Sticker::S6,
         ],
     };
+}
+
+use std::ops::Index;
+
+impl Index<EdgePos> for StickerCube {
+    type Output = Sticker;
+
+    fn index(&self, index: EdgePos) -> &Self::Output {
+        &self.edges[index as usize]
+    }
+}
+
+impl Index<CornerPos> for StickerCube {
+    type Output = Sticker;
+
+    fn index(&self, index: CornerPos) -> &Self::Output {
+        &self.corners[index as usize]
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -341,6 +359,38 @@ pub enum Sticker {
     S6,
 }
 
+impl From<EdgePos> for usize {
+    fn from(value: EdgePos) -> Self {
+        use EdgePos::*;
+        match value {
+            UB => 0,
+            UR => 1,
+            UF => 2,
+            UL => 3,
+            LU => 4,
+            LF => 5,
+            LD => 6,
+            LB => 7,
+            FU => 8,
+            FR => 9,
+            FD => 10,
+            FL => 11,
+            RU => 12,
+            RB => 13,
+            RD => 14,
+            RF => 15,
+            BU => 16,
+            BL => 17,
+            BD => 18,
+            BR => 19,
+            DF => 20,
+            DR => 21,
+            DB => 22,
+            DL => 23,
+        }
+    }
+}
+
 impl From<EdgePos> for Sticker {
     fn from(value: EdgePos) -> Self {
         use EdgePos::*;
@@ -373,6 +423,39 @@ impl From<EdgePos> for Sticker {
         }
     }
 }
+
+impl From<CornerPos> for usize {
+    fn from(value: CornerPos) -> Self {
+        use CornerPos::*;
+        match value {
+            UBL => 0,
+            UBR => 1,
+            UFR => 2,
+            UFL => 3,
+            LUB => 4,
+            LUF => 5,
+            LDF => 6,
+            LDB => 7,
+            FUL => 8,
+            FUR => 9,
+            FDR => 10,
+            FDL => 11,
+            RUF => 12,
+            RUB => 13,
+            RDB => 14,
+            RDF => 15,
+            BUR => 16,
+            BUL => 17,
+            BDL => 18,
+            BDR => 19,
+            DFR => 20,
+            DBR => 21,
+            DBL => 22,
+            DFL => 23,
+        }
+    }
+}
+
 impl From<CornerPos> for Sticker {
     fn from(value: CornerPos) -> Self {
         use CornerPos::*;
