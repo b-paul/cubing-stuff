@@ -216,6 +216,23 @@ impl StickerCube {
         ],
         centers: [S1, S2, S3, S4, S5, S6],
     };
+
+    pub fn sticker_to_face(&self, sticker: Sticker) -> Face {
+        self.centers
+            .iter()
+            .position(|c| *c == sticker)
+            .unwrap()
+            .try_into()
+            .unwrap()
+    }
+
+    pub fn edge_at(&self, pos: EdgePos) -> Result<EdgePos, ()> {
+        let s1 = self[pos];
+        let s2 = self[pos.flip()];
+        let f1 = self.sticker_to_face(s1);
+        let f2 = self.sticker_to_face(s2);
+        (f1, f2).try_into()
+    }
 }
 
 use std::ops::Index;
@@ -264,6 +281,74 @@ pub enum EdgePos {
     DL,
 }
 
+impl EdgePos {
+    pub fn flip(self) -> EdgePos {
+        use EdgePos::*;
+        match self {
+            UB => BU,
+            UR => RU,
+            UF => FU,
+            UL => LU,
+            LU => UL,
+            LF => FL,
+            LD => DL,
+            LB => BL,
+            FU => UF,
+            FR => RF,
+            FD => DF,
+            FL => LF,
+            RU => UR,
+            RB => BR,
+            RD => DR,
+            RF => FR,
+            BU => UB,
+            BL => LB,
+            BD => DB,
+            BR => RB,
+            DF => FD,
+            DR => RD,
+            DB => BD,
+            DL => LD,
+        }
+    }
+}
+
+impl TryInto<EdgePos> for (Face, Face) {
+    type Error = ();
+
+    fn try_into(self) -> Result<EdgePos, Self::Error> {
+        use EdgePos::*;
+        use Face::*;
+        match self {
+            (U, L) => Ok(UL),
+            (U, F) => Ok(UF),
+            (U, R) => Ok(UR),
+            (U, B) => Ok(UB),
+            (L, U) => Ok(LU),
+            (L, F) => Ok(LF),
+            (L, B) => Ok(LB),
+            (L, D) => Ok(LD),
+            (F, U) => Ok(FU),
+            (F, L) => Ok(FL),
+            (F, R) => Ok(FR),
+            (F, D) => Ok(FD),
+            (R, U) => Ok(RU),
+            (R, F) => Ok(RF),
+            (R, B) => Ok(RB),
+            (R, D) => Ok(RD),
+            (B, U) => Ok(BU),
+            (B, L) => Ok(BL),
+            (B, R) => Ok(BR),
+            (B, D) => Ok(BD),
+            (D, L) => Ok(DL),
+            (D, F) => Ok(DF),
+            (D, R) => Ok(DR),
+            (D, B) => Ok(DB),
+            _ => Err(()),
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum CornerPos {
     UBL,
@@ -294,18 +379,39 @@ pub enum CornerPos {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Sticker {
-    /// U
     S1,
-    /// L
     S2,
-    /// F
     S3,
-    /// R
     S4,
-    /// B
     S5,
-    /// D
     S6,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum Face {
+    U,
+    L,
+    F,
+    R,
+    B,
+    D,
+}
+
+impl TryFrom<usize> for Face {
+    type Error = ();
+
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        use Face::*;
+        match value {
+            0 => Ok(U),
+            1 => Ok(L),
+            2 => Ok(F),
+            3 => Ok(R),
+            4 => Ok(B),
+            5 => Ok(D),
+            _ => Err(()),
+        }
+    }
 }
 
 impl From<EdgePos> for usize {
@@ -340,35 +446,35 @@ impl From<EdgePos> for usize {
     }
 }
 
-impl From<EdgePos> for Sticker {
+impl From<EdgePos> for Face {
     fn from(value: EdgePos) -> Self {
         use EdgePos::*;
-        use Sticker::*;
+        use Face::*;
         match value {
-            UB => S1,
-            UR => S1,
-            UF => S1,
-            UL => S1,
-            LU => S2,
-            LF => S2,
-            LD => S2,
-            LB => S2,
-            FU => S3,
-            FR => S3,
-            FD => S3,
-            FL => S3,
-            RU => S4,
-            RB => S4,
-            RD => S4,
-            RF => S4,
-            BU => S5,
-            BL => S5,
-            BD => S5,
-            BR => S5,
-            DF => S6,
-            DR => S6,
-            DB => S6,
-            DL => S6,
+            UB => U,
+            UR => U,
+            UF => U,
+            UL => U,
+            LU => L,
+            LF => L,
+            LD => L,
+            LB => L,
+            FU => F,
+            FR => F,
+            FD => F,
+            FL => F,
+            RU => R,
+            RB => R,
+            RD => R,
+            RF => R,
+            BU => B,
+            BL => B,
+            BD => B,
+            BR => B,
+            DF => D,
+            DR => D,
+            DB => D,
+            DL => D,
         }
     }
 }
@@ -405,35 +511,68 @@ impl From<CornerPos> for usize {
     }
 }
 
-impl From<CornerPos> for Sticker {
+impl From<CornerPos> for Face {
     fn from(value: CornerPos) -> Self {
         use CornerPos::*;
-        use Sticker::*;
+        use Face::*;
         match value {
-            UBL => S1,
-            UBR => S1,
-            UFR => S1,
-            UFL => S1,
-            LUB => S2,
-            LUF => S2,
-            LDF => S2,
-            LDB => S2,
-            FUL => S3,
-            FUR => S3,
-            FDR => S3,
-            FDL => S3,
-            RUF => S4,
-            RUB => S4,
-            RDB => S4,
-            RDF => S4,
-            BUR => S5,
-            BUL => S5,
-            BDL => S5,
-            BDR => S5,
-            DFR => S6,
-            DBR => S6,
-            DBL => S6,
-            DFL => S6,
+            UBL => U,
+            UBR => U,
+            UFR => U,
+            UFL => U,
+            LUB => L,
+            LUF => L,
+            LDF => L,
+            LDB => L,
+            FUL => F,
+            FUR => F,
+            FDR => F,
+            FDL => F,
+            RUF => R,
+            RUB => R,
+            RDB => R,
+            RDF => R,
+            BUR => B,
+            BUL => B,
+            BDL => B,
+            BDR => B,
+            DFR => D,
+            DBR => D,
+            DBL => D,
+            DFL => D,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn pieces_on_solved_cube() {
+        use super::EdgePos::*;
+        use super::StickerCube;
+        assert_eq!(StickerCube::SOLVED.edge_at(UB).unwrap(), UB, "UB");
+        assert_eq!(StickerCube::SOLVED.edge_at(UR).unwrap(), UR, "UR");
+        assert_eq!(StickerCube::SOLVED.edge_at(UF).unwrap(), UF, "UF");
+        assert_eq!(StickerCube::SOLVED.edge_at(UL).unwrap(), UL, "UL");
+        assert_eq!(StickerCube::SOLVED.edge_at(LU).unwrap(), LU, "LU");
+        assert_eq!(StickerCube::SOLVED.edge_at(LF).unwrap(), LF, "LF");
+        assert_eq!(StickerCube::SOLVED.edge_at(LD).unwrap(), LD, "LD");
+        assert_eq!(StickerCube::SOLVED.edge_at(LB).unwrap(), LB, "LB");
+        assert_eq!(StickerCube::SOLVED.edge_at(FU).unwrap(), FU, "FU");
+        assert_eq!(StickerCube::SOLVED.edge_at(FR).unwrap(), FR, "FR");
+        assert_eq!(StickerCube::SOLVED.edge_at(FD).unwrap(), FD, "FD");
+        assert_eq!(StickerCube::SOLVED.edge_at(FL).unwrap(), FL, "FL");
+        assert_eq!(StickerCube::SOLVED.edge_at(RU).unwrap(), RU, "RU");
+        assert_eq!(StickerCube::SOLVED.edge_at(RB).unwrap(), RB, "RB");
+        assert_eq!(StickerCube::SOLVED.edge_at(RD).unwrap(), RD, "RD");
+        assert_eq!(StickerCube::SOLVED.edge_at(RF).unwrap(), RF, "RF");
+        assert_eq!(StickerCube::SOLVED.edge_at(BU).unwrap(), BU, "BU");
+        assert_eq!(StickerCube::SOLVED.edge_at(BL).unwrap(), BL, "BL");
+        assert_eq!(StickerCube::SOLVED.edge_at(BD).unwrap(), BD, "BD");
+        assert_eq!(StickerCube::SOLVED.edge_at(BR).unwrap(), BR, "BR");
+        assert_eq!(StickerCube::SOLVED.edge_at(DF).unwrap(), DF, "DF");
+        assert_eq!(StickerCube::SOLVED.edge_at(DR).unwrap(), DR, "DR");
+        assert_eq!(StickerCube::SOLVED.edge_at(DB).unwrap(), DB, "DB");
+        assert_eq!(StickerCube::SOLVED.edge_at(DL).unwrap(), DL, "DL");
     }
 }
