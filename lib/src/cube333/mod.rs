@@ -313,13 +313,13 @@ impl EdgePos {
     }
 }
 
-impl TryInto<EdgePos> for (Face, Face) {
+impl TryFrom<(Face, Face)> for EdgePos {
     type Error = ();
 
-    fn try_into(self) -> Result<EdgePos, Self::Error> {
+    fn try_from(value: (Face, Face)) -> Result<EdgePos, Self::Error> {
         use EdgePos::*;
         use Face::*;
-        match self {
+        match value {
             (U, L) => Ok(UL),
             (U, F) => Ok(UF),
             (U, R) => Ok(UR),
@@ -345,6 +345,39 @@ impl TryInto<EdgePos> for (Face, Face) {
             (D, R) => Ok(DR),
             (D, B) => Ok(DB),
             _ => Err(()),
+        }
+    }
+}
+
+impl From<EdgePos> for (Face, Face) {
+    fn from(value: EdgePos) -> Self {
+        use EdgePos::*;
+        use Face::*;
+        match value {
+            UB => (U, B),
+            UR => (U, R),
+            UF => (U, F),
+            UL => (U, L),
+            LU => (L, U),
+            LF => (L, F),
+            LD => (L, D),
+            LB => (L, B),
+            FU => (F, U),
+            FR => (F, R),
+            FD => (F, D),
+            FL => (F, L),
+            RU => (R, U),
+            RB => (R, B),
+            RD => (R, D),
+            RF => (R, F),
+            BU => (B, U),
+            BL => (B, L),
+            BD => (B, D),
+            BR => (B, R),
+            DF => (D, F),
+            DR => (D, R),
+            DB => (D, B),
+            DL => (D, L),
         }
     }
 }
@@ -375,6 +408,99 @@ pub enum CornerPos {
     DBR,
     DBL,
     DFL,
+}
+
+impl TryFrom<(Face, Face, Face)> for CornerPos {
+    type Error = ();
+
+    fn try_from(value: (Face, Face, Face)) -> Result<CornerPos, Self::Error> {
+        use CornerPos::*;
+        use Face::*;
+        match value {
+            (U, L, B) => Ok(UBL),
+            (U, B, L) => Ok(UBL),
+            (U, R, B) => Ok(UBR),
+            (U, B, R) => Ok(UBR),
+            (U, R, F) => Ok(UFR),
+            (U, F, R) => Ok(UFR),
+            (U, L, F) => Ok(UFL),
+            (U, F, L) => Ok(UFL),
+            (L, B, U) => Ok(LUB),
+            (L, U, B) => Ok(LUB),
+            (L, F, U) => Ok(LUF),
+            (L, U, F) => Ok(LUF),
+            (L, F, D) => Ok(LDF),
+            (L, D, F) => Ok(LDF),
+            (L, B, D) => Ok(LDB),
+            (L, D, B) => Ok(LDB),
+            (F, L, U) => Ok(FUL),
+            (F, U, L) => Ok(FUL),
+            (F, R, U) => Ok(FUR),
+            (F, U, R) => Ok(FUR),
+            (F, R, D) => Ok(FDR),
+            (F, D, R) => Ok(FDR),
+            (F, L, D) => Ok(FDL),
+            (F, D, L) => Ok(FDL),
+            (R, F, U) => Ok(RUF),
+            (R, U, F) => Ok(RUF),
+            (R, B, U) => Ok(RUB),
+            (R, U, B) => Ok(RUB),
+            (R, B, D) => Ok(RDB),
+            (R, D, B) => Ok(RDB),
+            (R, F, D) => Ok(RDF),
+            (R, D, F) => Ok(RDF),
+            (B, R, U) => Ok(BUR),
+            (B, U, R) => Ok(BUR),
+            (B, L, U) => Ok(BUL),
+            (B, U, L) => Ok(BUL),
+            (B, L, D) => Ok(BDL),
+            (B, D, L) => Ok(BDL),
+            (B, R, D) => Ok(BDR),
+            (B, D, R) => Ok(BDR),
+            (D, L, F) => Ok(DFL),
+            (D, F, L) => Ok(DFL),
+            (D, R, F) => Ok(DFR),
+            (D, F, R) => Ok(DFR),
+            (D, R, B) => Ok(DBR),
+            (D, B, R) => Ok(DBR),
+            (D, L, B) => Ok(DBL),
+            (D, B, L) => Ok(DBL),
+            _ => Err(()),
+        }
+    }
+}
+
+impl From<CornerPos> for (Face, Face, Face) {
+    fn from(value: CornerPos) -> Self {
+        use CornerPos::*;
+        use Face::*;
+        match value {
+            UBL => (U, B, L),
+            UBR => (U, B, R),
+            UFR => (U, F, R),
+            UFL => (U, F, L),
+            LUB => (L, U, B),
+            LUF => (L, U, F),
+            LDF => (L, D, F),
+            LDB => (L, D, B),
+            FUL => (F, U, L),
+            FUR => (F, U, R),
+            FDR => (F, D, R),
+            FDL => (F, D, L),
+            RUF => (R, U, F),
+            RUB => (R, U, B),
+            RDB => (R, D, B),
+            RDF => (R, D, F),
+            BUR => (B, U, R),
+            BUL => (B, U, L),
+            BDL => (B, D, L),
+            BDR => (B, D, R),
+            DFR => (D, F, R),
+            DBR => (D, B, R),
+            DBL => (D, B, L),
+            DFL => (D, F, L),
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
