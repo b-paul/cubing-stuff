@@ -283,33 +283,8 @@ pub enum EdgePos {
 
 impl EdgePos {
     pub fn flip(self) -> EdgePos {
-        use EdgePos::*;
-        match self {
-            UB => BU,
-            UR => RU,
-            UF => FU,
-            UL => LU,
-            LU => UL,
-            LF => FL,
-            LD => DL,
-            LB => BL,
-            FU => UF,
-            FR => RF,
-            FD => DF,
-            FL => LF,
-            RU => UR,
-            RB => BR,
-            RD => DR,
-            RF => FR,
-            BU => UB,
-            BL => LB,
-            BD => DB,
-            BR => RB,
-            DF => FD,
-            DR => RD,
-            DB => BD,
-            DL => LD,
-        }
+        let (f1, f2) = self.into();
+        (f2, f1).try_into().unwrap()
     }
 }
 
@@ -408,6 +383,68 @@ pub enum CornerPos {
     DBR,
     DBL,
     DFL,
+}
+
+impl CornerPos {
+    pub fn clockwise(self) -> CornerPos {
+        use CornerPos::*;
+        match self {
+            UBL => LUB,
+            UBR => BUR,
+            UFR => RUF,
+            UFL => FUL,
+            LUB => BUL,
+            LUF => UFL,
+            LDF => FDL,
+            LDB => DBL,
+            FUL => LUF,
+            FUR => UFR,
+            FDR => RDF,
+            FDL => DFL,
+            RUF => FUR,
+            RUB => UBR,
+            RDB => BDR,
+            RDF => DFR,
+            BUR => RUB,
+            BUL => UBL,
+            BDL => LDB,
+            BDR => DBR,
+            DFR => FDR,
+            DBR => RDB,
+            DBL => BDL,
+            DFL => LDF,
+        }
+    }
+
+    pub fn anticlockwise(self) -> CornerPos {
+        use CornerPos::*;
+        match self {
+            UBL => BUL,
+            UBR => RUB,
+            UFR => FUR,
+            UFL => LUF,
+            LUB => UBL,
+            LUF => FUL,
+            LDF => DFL,
+            LDB => BDL,
+            FUL => UFL,
+            FUR => RUF,
+            FDR => DFR,
+            FDL => LDF,
+            RUF => UFR,
+            RUB => BUR,
+            RDB => DBR,
+            RDF => FDR,
+            BUR => UBR,
+            BUL => LUB,
+            BDL => DBL,
+            BDR => RDB,
+            DFR => RDF,
+            DBR => BDR,
+            DBL => LDB,
+            DFL => FDL,
+        }
+    }
 }
 
 impl TryFrom<(Face, Face, Face)> for CornerPos {
