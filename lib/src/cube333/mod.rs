@@ -197,6 +197,31 @@ impl TryFrom<u8> for EdgeFlip {
     }
 }
 
+impl TryFrom<StickerCube> for CubieCube {
+    type Error = ();
+
+    fn try_from(sticker_cube: StickerCube) -> Result<Self, Self::Error> {
+        let mut co = [CornerTwist::Oriented; 8];
+        let mut cp = [Corner::UBL; 8];
+        let mut eo = [EdgeFlip::Oriented; 12];
+        let mut ep = [Edge::UB; 12];
+
+        for (i, c) in Corner::ARRAY.into_iter().enumerate() {
+            let corner = sticker_cube.corner_at(c.into())?;
+            co[i] = corner.ud_orientation();
+            cp[i] = corner.piece();
+        }
+
+        for (i, e) in Edge::ARRAY.into_iter().enumerate() {
+            let edge = sticker_cube.edge_at(e.into())?;
+            eo[i] = edge.fb_orientation();
+            ep[i] = edge.piece();
+        }
+
+        Ok(CubieCube { co, cp, eo, ep })
+    }
+}
+
 pub struct StickerCube {
     pub edges: [Sticker; 24],
     pub corners: [Sticker; 24],
@@ -232,6 +257,16 @@ impl StickerCube {
         let f1 = self.sticker_to_face(s1);
         let f2 = self.sticker_to_face(s2);
         (f1, f2).try_into()
+    }
+
+    pub fn corner_at(&self, pos: CornerPos) -> Result<CornerPos, ()> {
+        let s1 = self[pos];
+        let s2 = self[pos.clockwise()];
+        let s3 = self[pos.anticlockwise()];
+        let f1 = self.sticker_to_face(s1);
+        let f2 = self.sticker_to_face(s2);
+        let f3 = self.sticker_to_face(s3);
+        (f1, f2, f3).try_into()
     }
 }
 
@@ -285,6 +320,87 @@ impl EdgePos {
     pub fn flip(self) -> EdgePos {
         let (f1, f2) = self.into();
         (f2, f1).try_into().unwrap()
+    }
+
+    pub fn piece(self) -> Edge {
+        use EdgePos::*;
+        match self {
+            UB => Edge::UB,
+            UR => Edge::UR,
+            UF => Edge::UF,
+            UL => Edge::UL,
+            LU => Edge::UL,
+            LF => Edge::FL,
+            LD => Edge::DL,
+            LB => Edge::BL,
+            FU => Edge::UF,
+            FR => Edge::FR,
+            FD => Edge::DF,
+            FL => Edge::FL,
+            RU => Edge::UR,
+            RB => Edge::BR,
+            RD => Edge::DR,
+            RF => Edge::FR,
+            BU => Edge::UB,
+            BL => Edge::BL,
+            BD => Edge::DB,
+            BR => Edge::BR,
+            DF => Edge::DF,
+            DR => Edge::DR,
+            DB => Edge::DB,
+            DL => Edge::DL,
+        }
+    }
+
+    pub fn fb_orientation(self) -> EdgeFlip {
+        use EdgeFlip::*;
+        use EdgePos::*;
+        match self {
+            UB => Oriented,
+            UR => Oriented,
+            UF => Oriented,
+            UL => Oriented,
+            LU => Flipped,
+            LF => Flipped,
+            LD => Flipped,
+            LB => Flipped,
+            FU => Flipped,
+            FR => Oriented,
+            FD => Flipped,
+            FL => Oriented,
+            RU => Flipped,
+            RB => Flipped,
+            RD => Flipped,
+            RF => Flipped,
+            BU => Flipped,
+            BL => Oriented,
+            BD => Flipped,
+            BR => Oriented,
+            DF => Oriented,
+            DR => Oriented,
+            DB => Oriented,
+            DL => Oriented,
+        }
+    }
+}
+
+impl From<Edge> for EdgePos {
+    fn from(value: Edge) -> Self {
+        use EdgePos::*;
+        match value {
+            Edge::UF => UF,
+            Edge::UL => UL,
+            Edge::UB => UB,
+            Edge::UR => UR,
+            Edge::DF => DF,
+            Edge::DL => DL,
+            Edge::DB => DB,
+            Edge::DR => DR,
+            Edge::FR => FR,
+            Edge::FL => FL,
+            Edge::BL => BL,
+            Edge::BR => BR,
+        }
     }
 }
 
@@ -443,6 +559,84 @@ impl CornerPos {
             DBR => BDR,
             DBL => LDB,
             DFL => FDL,
+        }
+    }
+
+    pub fn piece(self) -> Corner {
+        use CornerPos::*;
+        match self {
+            UBL => Corner::UBL,
+            UBR => Corner::UBR,
+            UFR => Corner::UFR,
+            UFL => Corner::UFL,
+            LUB => Corner::UBL,
+            LUF => Corner::UFL,
+            LDF => Corner::DFL,
+            LDB => Corner::DBL,
+            FUL => Corner::UFL,
+            FUR => Corner::UFR,
+            FDR => Corner::DFR,
+            FDL => Corner::DFL,
+            RUF => Corner::UFR,
+            RUB => Corner::UBR,
+            RDB => Corner::DBR,
+            RDF => Corner::DFR,
+            BUR => Corner::UBR,
+            BUL => Corner::UBL,
+            BDL => Corner::DBL,
+            BDR => Corner::DBR,
+            DFR => Corner::DFR,
+            DBR => Corner::DBR,
+            DBL => Corner::DBL,
+            DFL => Corner::DFL,
+        }
+    }
+
+    // Orientation with U and D on top and bottom
+    pub fn ud_orientation(self) -> CornerTwist {
+        use CornerPos::*;
+        use CornerTwist::*;
+        match self {
+            UBL => Oriented,
+            UBR => Oriented,
+            UFR => Oriented,
+            UFL => Oriented,
+            LUB => Clockwise,
+            LUF => AntiClockwise,
+            LDF => Clockwise,
+            LDB => AntiClockwise,
+            FUL => Clockwise,
+            FUR => AntiClockwise,
+            FDR => Clockwise,
+            FDL => AntiClockwise,
+            RUF => Clockwise,
+            RUB => AntiClockwise,
+            RDB => Clockwise,
+            RDF => AntiClockwise,
+            BUR => Clockwise,
+            BUL => AntiClockwise,
+            BDL => Clockwise,
+            BDR => AntiClockwise,
+            DFR => Oriented,
+            DBR => Oriented,
+            DBL => Oriented,
+            DFL => Oriented,
+        }
+    }
+}
+
+impl From<Corner> for CornerPos {
+    fn from(value: Corner) -> Self {
+        use CornerPos::*;
+        match value {
+            Corner::UFR => UFR,
+            Corner::UFL => UFL,
+            Corner::UBL => UBL,
+            Corner::UBR => UBR,
+            Corner::DFR => DFR,
+            Corner::DFL => DFL,
+            Corner::DBL => DBL,
+            Corner::DBR => DBR,
         }
     }
 }
