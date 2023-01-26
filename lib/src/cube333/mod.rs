@@ -251,6 +251,10 @@ impl StickerCube {
             .unwrap()
     }
 
+    pub fn face_to_sticker(&self, face: Face) -> Sticker {
+        self.centers[face as usize]
+    }
+
     pub fn edge_at(&self, pos: EdgePos) -> Result<EdgePos, ()> {
         let s1 = self[pos];
         let s2 = self[pos.flip()];
@@ -268,9 +272,20 @@ impl StickerCube {
         let f3 = self.sticker_to_face(s3);
         (f1, f2, f3).try_into()
     }
+
+    pub fn place_edge(&mut self, piece: EdgePos, pos: EdgePos) {
+        self[pos] = self.face_to_sticker(piece.into());
+        self[pos.flip()] = self.face_to_sticker(piece.flip().into());
+    }
+
+    pub fn place_corner(&mut self, piece: CornerPos, pos: CornerPos) {
+        self[pos] = self.face_to_sticker(piece.into());
+        self[pos.clockwise()] = self.face_to_sticker(piece.clockwise().into());
+        self[pos.anticlockwise()] = self.face_to_sticker(piece.anticlockwise().into());
+    }
 }
 
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
 
 impl Index<EdgePos> for StickerCube {
     type Output = Sticker;
@@ -280,11 +295,23 @@ impl Index<EdgePos> for StickerCube {
     }
 }
 
+impl IndexMut<EdgePos> for StickerCube {
+    fn index_mut(&mut self, index: EdgePos) -> &mut Self::Output {
+        &mut self.edges[index as usize]
+    }
+}
+
 impl Index<CornerPos> for StickerCube {
     type Output = Sticker;
 
     fn index(&self, index: CornerPos) -> &Self::Output {
         &self.corners[index as usize]
+    }
+}
+
+impl IndexMut<CornerPos> for StickerCube {
+    fn index_mut(&mut self, index: CornerPos) -> &mut Self::Output {
+        &mut self.corners[index as usize]
     }
 }
 
@@ -503,63 +530,13 @@ pub enum CornerPos {
 
 impl CornerPos {
     pub fn clockwise(self) -> CornerPos {
-        use CornerPos::*;
-        match self {
-            UBL => LUB,
-            UBR => BUR,
-            UFR => RUF,
-            UFL => FUL,
-            LUB => BUL,
-            LUF => UFL,
-            LDF => FDL,
-            LDB => DBL,
-            FUL => LUF,
-            FUR => UFR,
-            FDR => RDF,
-            FDL => DFL,
-            RUF => FUR,
-            RUB => UBR,
-            RDB => BDR,
-            RDF => DFR,
-            BUR => RUB,
-            BUL => UBL,
-            BDL => LDB,
-            BDR => DBR,
-            DFR => FDR,
-            DBR => RDB,
-            DBL => BDL,
-            DFL => LDF,
-        }
+        let (f1, f2, f3) = self.into();
+        (f3, f1, f2).try_into().unwrap()
     }
 
     pub fn anticlockwise(self) -> CornerPos {
-        use CornerPos::*;
-        match self {
-            UBL => BUL,
-            UBR => RUB,
-            UFR => FUR,
-            UFL => LUF,
-            LUB => UBL,
-            LUF => FUL,
-            LDF => DFL,
-            LDB => BDL,
-            FUL => UFL,
-            FUR => RUF,
-            FDR => DFR,
-            FDL => LDF,
-            RUF => UFR,
-            RUB => BUR,
-            RDB => DBR,
-            RDF => FDR,
-            BUR => UBR,
-            BUL => LUB,
-            BDL => DBL,
-            BDR => RDB,
-            DFR => RDF,
-            DBR => BDR,
-            DBL => LDB,
-            DFL => FDL,
-        }
+        let (f1, f2, f3) = self.into();
+        (f2, f3, f1).try_into().unwrap()
     }
 
     pub fn piece(self) -> Corner {
@@ -706,30 +683,30 @@ impl From<CornerPos> for (Face, Face, Face) {
         use CornerPos::*;
         use Face::*;
         match value {
-            UBL => (U, B, L),
+            UBL => (U, L, B),
             UBR => (U, B, R),
-            UFR => (U, F, R),
+            UFR => (U, R, F),
             UFL => (U, F, L),
-            LUB => (L, U, B),
+            LUB => (L, B, U),
             LUF => (L, U, F),
-            LDF => (L, D, F),
+            LDF => (L, F, D),
             LDB => (L, D, B),
-            FUL => (F, U, L),
+            FUL => (F, L, U),
             FUR => (F, U, R),
-            FDR => (F, D, R),
+            FDR => (F, R, D),
             FDL => (F, D, L),
-            RUF => (R, U, F),
+            RUF => (R, F, U),
             RUB => (R, U, B),
-            RDB => (R, D, B),
+            RDB => (R, B, D),
             RDF => (R, D, F),
-            BUR => (B, U, R),
+            BUR => (B, R, U),
             BUL => (B, U, L),
-            BDL => (B, D, L),
+            BDL => (B, L, D),
             BDR => (B, D, R),
             DFR => (D, F, R),
-            DBR => (D, B, R),
+            DBR => (D, R, B),
             DBL => (D, B, L),
-            DFL => (D, F, L),
+            DFL => (D, L, F),
         }
     }
 }
@@ -752,6 +729,19 @@ pub enum Face {
     R,
     B,
     D,
+}
+
+impl From<Face> for usize {
+    fn from(value: Face) -> Self {
+        match value {
+            Face::U => 0,
+            Face::L => 1,
+            Face::F => 2,
+            Face::R => 3,
+            Face::B => 4,
+            Face::D => 5,
+        }
+    }
 }
 
 impl TryFrom<usize> for Face {
