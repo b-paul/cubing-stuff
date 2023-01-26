@@ -197,6 +197,21 @@ impl TryFrom<u8> for EdgeFlip {
     }
 }
 
+impl From<CubieCube> for StickerCube {
+    fn from(cubie_cube: CubieCube) -> Self {
+        let mut sticker_cube = StickerCube::SOLVED;
+
+        for (piece, pos) in cubie_cube.ep.zip(cubie_cube.eo).zip(Edge::ARRAY) {
+            sticker_cube.place_edge(piece.into(), pos.into());
+        }
+        for (piece, pos) in cubie_cube.cp.zip(cubie_cube.co).zip(Corner::ARRAY) {
+            sticker_cube.place_corner(piece.into(), pos.into());
+        }
+
+        sticker_cube
+    }
+}
+
 impl TryFrom<StickerCube> for CubieCube {
     type Error = ();
 
@@ -431,6 +446,38 @@ impl From<Edge> for EdgePos {
     }
 }
 
+impl From<(Edge, EdgeFlip)> for EdgePos {
+    fn from(value: (Edge, EdgeFlip)) -> Self {
+        use EdgePos::*;
+        match value {
+            (Edge::UF, EdgeFlip::Oriented) => UF,
+            (Edge::UF, EdgeFlip::Flipped) => FU,
+            (Edge::UL, EdgeFlip::Oriented) => UL,
+            (Edge::UL, EdgeFlip::Flipped) => LU,
+            (Edge::UB, EdgeFlip::Oriented) => UB,
+            (Edge::UB, EdgeFlip::Flipped) => BU,
+            (Edge::UR, EdgeFlip::Oriented) => UR,
+            (Edge::UR, EdgeFlip::Flipped) => RU,
+            (Edge::DF, EdgeFlip::Oriented) => DF,
+            (Edge::DF, EdgeFlip::Flipped) => FD,
+            (Edge::DL, EdgeFlip::Oriented) => DL,
+            (Edge::DL, EdgeFlip::Flipped) => LD,
+            (Edge::DB, EdgeFlip::Oriented) => DB,
+            (Edge::DB, EdgeFlip::Flipped) => BD,
+            (Edge::DR, EdgeFlip::Oriented) => DR,
+            (Edge::DR, EdgeFlip::Flipped) => RD,
+            (Edge::FR, EdgeFlip::Oriented) => FR,
+            (Edge::FR, EdgeFlip::Flipped) => RF,
+            (Edge::FL, EdgeFlip::Oriented) => FL,
+            (Edge::FL, EdgeFlip::Flipped) => LF,
+            (Edge::BL, EdgeFlip::Oriented) => BL,
+            (Edge::BL, EdgeFlip::Flipped) => LB,
+            (Edge::BR, EdgeFlip::Oriented) => BR,
+            (Edge::BR, EdgeFlip::Flipped) => RB,
+        }
+    }
+}
+
 impl TryFrom<(Face, Face)> for EdgePos {
     type Error = ();
 
@@ -614,6 +661,38 @@ impl From<Corner> for CornerPos {
             Corner::DFL => DFL,
             Corner::DBL => DBL,
             Corner::DBR => DBR,
+        }
+    }
+}
+
+impl From<(Corner, CornerTwist)> for CornerPos {
+    fn from(value: (Corner, CornerTwist)) -> Self {
+        use CornerPos::*;
+        match value {
+            (Corner::UFR, CornerTwist::Oriented) => UFR,
+            (Corner::UFR, CornerTwist::Clockwise) => RUF,
+            (Corner::UFR, CornerTwist::AntiClockwise) => FUR,
+            (Corner::UFL, CornerTwist::Oriented) => UFL,
+            (Corner::UFL, CornerTwist::Clockwise) => FUL,
+            (Corner::UFL, CornerTwist::AntiClockwise) => LUF,
+            (Corner::UBL, CornerTwist::Oriented) => UBL,
+            (Corner::UBL, CornerTwist::Clockwise) => LUB,
+            (Corner::UBL, CornerTwist::AntiClockwise) => BUL,
+            (Corner::UBR, CornerTwist::Oriented) => UBR,
+            (Corner::UBR, CornerTwist::Clockwise) => BUR,
+            (Corner::UBR, CornerTwist::AntiClockwise) => RUB,
+            (Corner::DFR, CornerTwist::Oriented) => DFR,
+            (Corner::DFR, CornerTwist::Clockwise) => FDR,
+            (Corner::DFR, CornerTwist::AntiClockwise) => RDF,
+            (Corner::DFL, CornerTwist::Oriented) => DFL,
+            (Corner::DFL, CornerTwist::Clockwise) => LDF,
+            (Corner::DFL, CornerTwist::AntiClockwise) => FDL,
+            (Corner::DBL, CornerTwist::Oriented) => DBL,
+            (Corner::DBL, CornerTwist::Clockwise) => BDL,
+            (Corner::DBL, CornerTwist::AntiClockwise) => LDB,
+            (Corner::DBR, CornerTwist::Oriented) => DBR,
+            (Corner::DBR, CornerTwist::Clockwise) => RDB,
+            (Corner::DBR, CornerTwist::AntiClockwise) => BDR,
         }
     }
 }
