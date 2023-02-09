@@ -1,5 +1,5 @@
 [package]
-name = "lib"
+name = "cube-lib"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,3 +14,6 @@ proptest = "1.0.0"
 [[bench]]
 name = "conversion"
 harness = false
+
+[[example]]
+name = "hello"

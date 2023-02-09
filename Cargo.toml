@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "lib",
+    "cube-lib",
 
     "fmc-trainers",
 ]
