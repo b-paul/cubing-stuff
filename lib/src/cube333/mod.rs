@@ -970,6 +970,92 @@ impl From<CornerPos> for Face {
     }
 }
 
+impl std::fmt::Display for StickerCube {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use CornerPos::*;
+        use EdgePos::*;
+        fn str(s: Sticker) -> &'static str {
+            match s {
+                S1 => "u ",
+                S2 => "l ",
+                S3 => "f ",
+                S4 => "r ",
+                S5 => "b ",
+                S6 => "d ",
+            }
+        }
+
+        write!(
+            f,
+            "
+      {}{}{}
+      {}{}{}
+      {}{}{}
+{}{}{}{}{}{}{}{}{}{}{}{}
+{}{}{}{}{}{}{}{}{}{}{}{}
+{}{}{}{}{}{}{}{}{}{}{}{}
+      {}{}{}
+      {}{}{}
+      {}{}{}
+",
+            str(self[UBL]),
+            str(self[UB]),
+            str(self[UBR]),
+            str(self[UL]),
+            str(self.centers[0]),
+            str(self[UR]),
+            str(self[UFL]),
+            str(self[UF]),
+            str(self[UFR]),
+            str(self[LUB]),
+            str(self[LU]),
+            str(self[LUF]),
+            str(self[FUL]),
+            str(self[FU]),
+            str(self[FUR]),
+            str(self[RUF]),
+            str(self[RU]),
+            str(self[RUB]),
+            str(self[BUL]),
+            str(self[BU]),
+            str(self[BUR]),
+            str(self[LB]),
+            str(self.centers[1]),
+            str(self[LF]),
+            str(self[FL]),
+            str(self.centers[2]),
+            str(self[FR]),
+            str(self[RF]),
+            str(self.centers[3]),
+            str(self[RB]),
+            str(self[BL]),
+            str(self.centers[4]),
+            str(self[BR]),
+            str(self[LDB]),
+            str(self[LD]),
+            str(self[LDF]),
+            str(self[FDL]),
+            str(self[FD]),
+            str(self[FDR]),
+            str(self[RDF]),
+            str(self[RD]),
+            str(self[RDB]),
+            str(self[BDL]),
+            str(self[BD]),
+            str(self[BDR]),
+            str(self[DFL]),
+            str(self[DF]),
+            str(self[DFR]),
+            str(self[DL]),
+            str(self.centers[5]),
+            str(self[DR]),
+            str(self[DBL]),
+            str(self[DB]),
+            str(self[DBR]),
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
