@@ -70,8 +70,10 @@ impl CubieCube {
             .fold(0, |acc, &i| (acc * STATES) + i as u16)
     }
 
-    fn to_p_coord<const COUNT: usize>(_arr: &[u8; COUNT]) -> u32 {
-        todo!()
+    pub(crate) fn to_p_coord<const COUNT: usize>(arr: &[u8; COUNT]) -> u32 {
+        (1..COUNT).rev().fold(0, |acc, idx| {
+            (acc + arr[0..idx].iter().filter(|x| **x > arr[idx]).count() as u32) * idx as u32
+        })
     }
 }
 
@@ -85,6 +87,12 @@ mod tests {
         assert_eq!(identity, identity.to_cubie().to_coord())
     }
     */
+
+    #[test]
+    fn p_coords() {
+        // idk how to make more tests for this
+        assert_eq!(CubieCube::to_p_coord::<8>(&[0,1,2,3,4,5,6,7]), 0);
+    }
 
     use crate::cube333::moves::{Htm, Move, MoveGenerator};
     use proptest::strategy::{Strategy, ValueTree};
