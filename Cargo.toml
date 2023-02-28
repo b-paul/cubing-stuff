@@ -4,4 +4,5 @@ members = [
     "cube-lib",
 
     "fmc-trainers",
+    "generator-solver",
 ]

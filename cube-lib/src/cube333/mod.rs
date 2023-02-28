@@ -4,7 +4,7 @@ pub mod coordcube;
 pub mod moves;
 pub mod solver;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CubieCube {
     pub co: [CornerTwist; 8],
     pub cp: [Corner; 8],
@@ -26,7 +26,7 @@ pub enum StateConversionError {
     InvalidValue,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Corner {
     UFR,
     UFL,
@@ -77,7 +77,7 @@ impl TryFrom<u8> for Corner {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Edge {
     UF,
     UL,
@@ -140,7 +140,7 @@ impl TryFrom<u8> for Edge {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum CornerTwist {
     Oriented,
     Clockwise,
@@ -170,7 +170,7 @@ impl TryFrom<u8> for CornerTwist {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum EdgeFlip {
     Oriented,
     Flipped,
