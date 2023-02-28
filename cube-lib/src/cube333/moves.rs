@@ -12,8 +12,8 @@ pub enum MoveType {
 
 #[derive(Copy, Clone)]
 pub struct Move {
-    ty: MoveType,
-    count: u8,
+    pub ty: MoveType,
+    pub count: u8,
 }
 
 // I don't want to have the default derive debug for this!
@@ -41,6 +41,7 @@ impl From<Move> for usize {
     }
 }
 
+#[macro_export]
 macro_rules! mv {
     ($ty:ident, $count: expr) => {
         Move {
@@ -110,16 +111,16 @@ const EO_OFFSETS: [[u8; 12]; 6] = [
     [0; 12],
     [0; 12],
     [0; 12],
-    [1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0],
-    [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+    [1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0],
+    [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1],
 ];
 const EP_OFFSETS: [[usize; 12]; 6] = [
-    [0, 1, 2, 4, 11, 5, 6, 3, 8, 9, 10, 7],
-    [0, 5, 2, 3, 4, 9, 1, 7, 8, 6, 10, 11],
+    [0, 1, 2, 8, 4, 5, 6, 11, 7, 9, 10, 3],
+    [0, 10, 2, 3, 4, 9, 6, 7, 8, 1, 5, 11],
     [3, 0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11],
     [0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 8],
-    [5, 1, 2, 3, 0, 8, 6, 7, 4, 9, 10, 11],
-    [0, 1, 7, 3, 4, 5, 2, 10, 8, 9, 6, 11],
+    [9, 1, 2, 3, 8, 5, 6, 7, 0, 4, 10, 11],
+    [0, 1, 11, 3, 4, 5, 10, 7, 8, 9, 2, 6],
 ];
 
 impl CubieCube {
@@ -176,7 +177,7 @@ mod tests {
         let mut cube = CubieCube::SOLVED;
         for _ in 0..4 {
             cube = cube.make_move(Move {
-                ty: MoveType::R,
+                ty: MoveType::B,
                 count: 1,
             });
         }
