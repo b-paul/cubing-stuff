@@ -72,7 +72,7 @@ impl CubieCube {
 
     pub(crate) fn to_p_coord<const COUNT: usize>(arr: &[u8; COUNT]) -> u32 {
         (1..COUNT).rev().fold(0, |acc, idx| {
-            (acc + arr[0..idx].iter().filter(|x| **x > arr[idx]).count() as u32) * idx as u32
+            (acc + arr[0..idx].iter().filter(|&x| *x > arr[idx]).count() as u32) * idx as u32
         })
     }
 }
