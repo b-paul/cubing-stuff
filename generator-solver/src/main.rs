@@ -1,10 +1,34 @@
 use cube_lib::cube333::{
-    moves::{Move, MoveGenerator, MoveType},
+    moves::{Move, MoveGenerator, Htm, MoveType},
     CubieCube,
 };
 use rand::seq::IteratorRandom;
 use std::collections::HashSet;
 
+const U1: Move = Move {
+    ty: MoveType::U,
+    count: 1,
+};
+const D1: Move = Move {
+    ty: MoveType::D,
+    count: 1,
+};
+const R1: Move = Move {
+    ty: MoveType::R,
+    count: 1,
+};
+const L1: Move = Move {
+    ty: MoveType::L,
+    count: 1,
+};
+const F1: Move = Move {
+    ty: MoveType::F,
+    count: 1,
+};
+const B1: Move = Move {
+    ty: MoveType::B,
+    count: 2,
+};
 const U2: Move = Move {
     ty: MoveType::U,
     count: 2,
@@ -28,6 +52,30 @@ const F2: Move = Move {
 const B2: Move = Move {
     ty: MoveType::B,
     count: 2,
+};
+const U3: Move = Move {
+    ty: MoveType::U,
+    count: 3,
+};
+const D3: Move = Move {
+    ty: MoveType::D,
+    count: 3,
+};
+const R3: Move = Move {
+    ty: MoveType::R,
+    count: 3,
+};
+const L3: Move = Move {
+    ty: MoveType::L,
+    count: 3,
+};
+const F3: Move = Move {
+    ty: MoveType::F,
+    count: 3,
+};
+const B3: Move = Move {
+    ty: MoveType::B,
+    count: 3,
 };
 
 pub struct Fr;
@@ -74,6 +122,115 @@ impl GeneratorSet {
         set.insert(CubieCube::SOLVED);
         GeneratorSet { set }
     }
+
+    fn slice_set() -> Self {
+        let mut set = HashSet::new();
+
+        set.insert(CubieCube::SOLVED);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(R2);
+        cube = cube.make_move(U3);
+        cube = cube.make_move(D1);
+        cube = cube.make_move(B2);
+        cube = cube.make_move(U1);
+        cube = cube.make_move(D3);
+        set.insert(cube);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(U3);
+        cube = cube.make_move(D1);
+        cube = cube.make_move(B2);
+        cube = cube.make_move(U1);
+        cube = cube.make_move(D3);
+        cube = cube.make_move(R2);
+        set.insert(cube);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(R2);
+        cube = cube.make_move(U1);
+        cube = cube.make_move(D3);
+        cube = cube.make_move(F2);
+        cube = cube.make_move(U3);
+        cube = cube.make_move(D1);
+        set.insert(cube);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(U1);
+        cube = cube.make_move(D3);
+        cube = cube.make_move(F2);
+        cube = cube.make_move(U3);
+        cube = cube.make_move(D1);
+        cube = cube.make_move(R2);
+        set.insert(cube);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(L2);
+        cube = cube.make_move(U1);
+        cube = cube.make_move(D3);
+        cube = cube.make_move(B2);
+        cube = cube.make_move(U3);
+        cube = cube.make_move(D1);
+        set.insert(cube);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(U1);
+        cube = cube.make_move(D3);
+        cube = cube.make_move(B2);
+        cube = cube.make_move(U3);
+        cube = cube.make_move(D1);
+        cube = cube.make_move(L2);
+        set.insert(cube);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(L2);
+        cube = cube.make_move(U3);
+        cube = cube.make_move(D1);
+        cube = cube.make_move(F2);
+        cube = cube.make_move(U1);
+        cube = cube.make_move(D3);
+        set.insert(cube);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(U3);
+        cube = cube.make_move(D1);
+        cube = cube.make_move(F2);
+        cube = cube.make_move(U1);
+        cube = cube.make_move(D3);
+        cube = cube.make_move(L2);
+        set.insert(cube);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(L2);
+        cube = cube.make_move(U2);
+        cube = cube.make_move(D2);
+        cube = cube.make_move(R2);
+        cube = cube.make_move(U2);
+        cube = cube.make_move(D2);
+        set.insert(cube);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(F2);
+        cube = cube.make_move(U2);
+        cube = cube.make_move(D2);
+        cube = cube.make_move(B2);
+        cube = cube.make_move(U2);
+        cube = cube.make_move(D2);
+        set.insert(cube);
+
+        let mut cube = CubieCube::SOLVED;
+        cube = cube.make_move(R2);
+        cube = cube.make_move(F2);
+        cube = cube.make_move(U2);
+        cube = cube.make_move(D2);
+        cube = cube.make_move(B2);
+        cube = cube.make_move(U2);
+        cube = cube.make_move(D2);
+        cube = cube.make_move(R2);
+        set.insert(cube);
+
+        GeneratorSet { set }
+    }
 }
 
 fn search<G: MoveGenerator>(
@@ -109,31 +266,38 @@ fn solve<G: MoveGenerator>(cube: CubieCube, set: &GeneratorSet) -> Vec<Move> {
 
 fn main() {
     let solved_set = GeneratorSet::solved_set();
-
+    let slice_set = GeneratorSet::slice_set();
     let fr_set = GeneratorSet::from_generator_trait::<Fr>();
     println!(
         "Floppy reduction set generated with {} elements",
         fr_set.set.len()
     );
-    let htr_set = GeneratorSet::from_generator_trait::<Htr>();
-    println!("HTR set generated with {} elements", htr_set.set.len());
+    //let htr_set = GeneratorSet::from_generator_trait::<Htr>();
+    //println!("HTR set generated with {} elements", htr_set.set.len());
 
     /*
     let mut cube = CubieCube::SOLVED;
 
-    cube = cube.make_move(R2);
-    cube = cube.make_move(U2);
-    cube = cube.make_move(R2);
-    cube = cube.make_move(U2);
+    cube = cube.make_move(B2);
     cube = cube.make_move(L2);
-    cube = cube.make_move(U2);
+    cube = cube.make_move(B2);
+    cube = cube.make_move(R2);
+    cube = cube.make_move(L2);
+    cube = cube.make_move(B2);
+    cube = cube.make_move(L2);
+    cube = cube.make_move(F2);
 
-    let seq = solve::<Htr>(cube, &fr_set);
+    let seq = solve::<Htm>(cube, &solved_set);
     println!("{:?}", seq);
     */
 
-    for cube in htr_set.set.iter() {
-        let seq = solve::<Htr>(cube.clone(), &fr_set);
-        println!("{:?}", seq);
+    for cube in fr_set.set.iter() {
+        let seq1 = solve::<Fr>(cube.clone(), &solved_set);
+        let seq2 = solve::<Htr>(cube.clone(), &slice_set);
+        if seq1.len() > seq2.len() {
+            println!("Fr finish: {:?}, Htr slice: {:?}", seq1, seq2);
+        } else {
+            println!("Fr finish: {:?}", seq1);
+        }
     }
 }
