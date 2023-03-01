@@ -99,7 +99,8 @@ fn search<G: MoveGenerator>(
 
 fn solve<G: MoveGenerator>(cube: CubieCube, set: &GeneratorSet) -> Vec<Move> {
     for depth in 0..32 {
-        if let Some(sol) = search::<G>(cube.clone(), set, depth) {
+        if let Some(mut sol) = search::<G>(cube.clone(), set, depth) {
+            sol.reverse();
             return sol;
         }
     }
