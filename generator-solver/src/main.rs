@@ -1,5 +1,5 @@
 use cube_lib::cube333::{
-    moves::{Move, MoveGenerator, Htm, MoveType},
+    moves::{Htm, Move, MoveGenerator, MoveType},
     CubieCube,
 };
 use rand::seq::IteratorRandom;
@@ -97,11 +97,11 @@ struct GeneratorSet {
 }
 
 impl GeneratorSet {
-    fn from_generator_trait<G: MoveGenerator>() -> Self {
+    fn from_generator_trait<G: MoveGenerator>(cube: CubieCube) -> Self {
         // BFS on solved cube
         let mut set = HashSet::new();
 
-        let mut stack = vec![CubieCube::SOLVED];
+        let mut stack = vec![cube];
 
         while let Some(cube) = stack.pop() {
             set.insert(cube.clone());
@@ -231,6 +231,17 @@ impl GeneratorSet {
 
         GeneratorSet { set }
     }
+
+    fn product<G: MoveGenerator>(&self) -> Self {
+        let mut set = HashSet::new();
+        for cube in self.set.clone().into_iter() {
+            let tmpset = Self::from_generator_trait::<G>(cube);
+            for cube in tmpset.set.into_iter() {
+                set.insert(cube);
+            }
+        }
+        GeneratorSet { set }
+    }
 }
 
 fn search<G: MoveGenerator>(
@@ -267,13 +278,14 @@ fn solve<G: MoveGenerator>(cube: CubieCube, set: &GeneratorSet) -> Vec<Move> {
 fn main() {
     let solved_set = GeneratorSet::solved_set();
     let slice_set = GeneratorSet::slice_set();
-    let fr_set = GeneratorSet::from_generator_trait::<Fr>();
+    let fr_set = GeneratorSet::from_generator_trait::<Fr>(CubieCube::SOLVED);
+    let fr_slice_set = slice_set.product::<Fr>();
     println!(
         "Floppy reduction set generated with {} elements",
         fr_set.set.len()
     );
-    //let htr_set = GeneratorSet::from_generator_trait::<Htr>();
-    //println!("HTR set generated with {} elements", htr_set.set.len());
+    let htr_set = GeneratorSet::from_generator_trait::<Htr>(CubieCube::SOLVED);
+    println!("HTR set generated with {} elements", htr_set.set.len());
 
     /*
     let mut cube = CubieCube::SOLVED;
@@ -291,13 +303,8 @@ fn main() {
     println!("{:?}", seq);
     */
 
-    for cube in fr_set.set.iter() {
-        let seq1 = solve::<Fr>(cube.clone(), &solved_set);
-        let seq2 = solve::<Htr>(cube.clone(), &slice_set);
-        if seq1.len() > seq2.len() {
-            println!("Fr finish: {:?}, Htr slice: {:?}", seq1, seq2);
-        } else {
-            println!("Fr finish: {:?}", seq1);
-        }
+    for cube in htr_set.set.iter() {
+        let seq = solve::<Htr>(cube.clone(), &fr_slice_set);
+        println!("{:?}", seq);
     }
 }
