@@ -1,18 +1,29 @@
 // Cube333 module
 
+/// Implementation of a cube based on coordinates, which are more performant than arrays when
+/// making moves but harder to work with.
 pub mod coordcube;
+/// Defines move types and implements application of moves to the CubieCube.
 pub mod moves;
-pub mod solver;
 
+/// An implementation of a Rubik's cube which represents itself using pieces in an array. A Piece
+/// has an orientation and a permutation to uniquely identify itself. Note that there exists some
+/// CubieCubes which are not solvable (e.g. a corner twist).
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CubieCube {
+    // May want to make these values not public
+    /// Corner orientation
     pub co: [CornerTwist; 8],
+    /// Corner permutation
     pub cp: [Corner; 8],
+    /// Edge orientation
     pub eo: [EdgeFlip; 12],
+    /// Edge permutation
     pub ep: [Edge; 12],
 }
 
 impl CubieCube {
+    /// The solved cube stored as a const.
     pub const SOLVED: CubieCube = CubieCube {
         co: [CornerTwist::Oriented; 8],
         cp: Corner::ARRAY,
@@ -21,12 +32,17 @@ impl CubieCube {
     };
 }
 
+/// An error type for errors related to converting cubes between representations.
 #[derive(Debug)]
 pub enum StateConversionError {
+    /// An invalid integer value was passed into a function to generate a piece
+    /// orientation/permutation enum value.
     InvalidValue,
 }
 
+/// An enum for every corner piece location.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[allow(missing_docs)]
 pub enum Corner {
     UFR,
     UFL,
@@ -41,7 +57,7 @@ pub enum Corner {
 use Corner::*;
 
 impl Corner {
-    pub const ARRAY: [Corner; 8] = [UFR, UFL, UBL, UBR, DFR, DFL, DBL, DBR];
+    const ARRAY: [Corner; 8] = [UFR, UFL, UBL, UBR, DFR, DFL, DBL, DBR];
 }
 
 impl From<Corner> for u8 {
@@ -77,7 +93,9 @@ impl TryFrom<u8> for Corner {
     }
 }
 
+/// An enum for every edge piece location.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[allow(missing_docs)]
 pub enum Edge {
     UF,
     UL,
@@ -96,7 +114,7 @@ pub enum Edge {
 use Edge::*;
 
 impl Edge {
-    pub const ARRAY: [Edge; 12] = [UF, UL, UB, UR, DF, DL, DB, DR, FR, FL, BL, BR];
+    const ARRAY: [Edge; 12] = [UF, UL, UB, UR, DF, DL, DB, DR, FR, FL, BL, BR];
 }
 
 impl From<Edge> for u8 {
@@ -140,7 +158,9 @@ impl TryFrom<u8> for Edge {
     }
 }
 
+/// An enum for every corner twist case.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[allow(missing_docs)]
 pub enum CornerTwist {
     Oriented,
     Clockwise,
@@ -170,7 +190,9 @@ impl TryFrom<u8> for CornerTwist {
     }
 }
 
+/// An enum to tell if an edge is flipped or not.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[allow(missing_docs)]
 pub enum EdgeFlip {
     Oriented,
     Flipped,
@@ -237,14 +259,18 @@ impl TryFrom<StickerCube> for CubieCube {
     }
 }
 
+/// A Rubik's cube implementation that represents itself using stickers. Faces go in the order of
+/// UP LEFT FRONT RIGHT BACK DOWN. Stickers go left to right, top to bottom, starting at the top
+/// right.
 pub struct StickerCube {
-    pub edges: [Sticker; 24],
-    pub corners: [Sticker; 24],
-    pub centers: [Sticker; 6],
+    pub(crate) edges: [Sticker; 24],
+    pub(crate) corners: [Sticker; 24],
+    pub(crate) centers: [Sticker; 6],
 }
 
 use Sticker::*;
 impl StickerCube {
+    /// The solved cube stored as a const.
     pub const SOLVED: StickerCube = StickerCube {
         edges: [
             S1, S1, S1, S1, S2, S2, S2, S2, S3, S3, S3, S3, S4, S4, S4, S4, S5, S5, S5, S5, S6, S6,
@@ -257,7 +283,7 @@ impl StickerCube {
         centers: [S1, S2, S3, S4, S5, S6],
     };
 
-    pub fn sticker_to_face(&self, sticker: Sticker) -> Face {
+    pub(crate) fn sticker_to_face(&self, sticker: Sticker) -> Face {
         self.centers
             .iter()
             .position(|c| *c == sticker)
@@ -266,11 +292,11 @@ impl StickerCube {
             .unwrap()
     }
 
-    pub fn face_to_sticker(&self, face: Face) -> Sticker {
+    pub(crate) fn face_to_sticker(&self, face: Face) -> Sticker {
         self.centers[face as usize]
     }
 
-    pub fn edge_at(&self, pos: EdgePos) -> Result<EdgePos, ()> {
+    pub(crate) fn edge_at(&self, pos: EdgePos) -> Result<EdgePos, ()> {
         let s1 = self[pos];
         let s2 = self[pos.flip()];
         let f1 = self.sticker_to_face(s1);
@@ -278,7 +304,7 @@ impl StickerCube {
         (f1, f2).try_into()
     }
 
-    pub fn corner_at(&self, pos: CornerPos) -> Result<CornerPos, ()> {
+    pub(crate) fn corner_at(&self, pos: CornerPos) -> Result<CornerPos, ()> {
         let s1 = self[pos];
         let s2 = self[pos.clockwise()];
         let s3 = self[pos.anticlockwise()];
@@ -288,12 +314,12 @@ impl StickerCube {
         (f1, f2, f3).try_into()
     }
 
-    pub fn place_edge(&mut self, piece: EdgePos, pos: EdgePos) {
+    pub(crate) fn place_edge(&mut self, piece: EdgePos, pos: EdgePos) {
         self[pos] = self.face_to_sticker(piece.into());
         self[pos.flip()] = self.face_to_sticker(piece.flip().into());
     }
 
-    pub fn place_corner(&mut self, piece: CornerPos, pos: CornerPos) {
+    pub(crate) fn place_corner(&mut self, piece: CornerPos, pos: CornerPos) {
         self[pos] = self.face_to_sticker(piece.into());
         self[pos.clockwise()] = self.face_to_sticker(piece.clockwise().into());
         self[pos.anticlockwise()] = self.face_to_sticker(piece.anticlockwise().into());
@@ -330,7 +356,9 @@ impl IndexMut<CornerPos> for StickerCube {
     }
 }
 
+/// An enum to represent every edge sticker position.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub enum EdgePos {
     UB,
     UR,
@@ -359,12 +387,12 @@ pub enum EdgePos {
 }
 
 impl EdgePos {
-    pub fn flip(self) -> EdgePos {
+    fn flip(self) -> EdgePos {
         let (f1, f2) = self.into();
         (f2, f1).try_into().unwrap()
     }
 
-    pub fn piece(self) -> Edge {
+    fn piece(self) -> Edge {
         use EdgePos::*;
         match self {
             UB => Edge::UB,
@@ -394,6 +422,8 @@ impl EdgePos {
         }
     }
 
+    /// Returns the eo of a piece with respect to the F/B axis.
+    /// TODO! may need to reexplain this + implement eo for other axis.
     pub fn fb_orientation(self) -> EdgeFlip {
         use EdgeFlip::*;
         use EdgePos::*;
@@ -547,7 +577,9 @@ impl From<EdgePos> for (Face, Face) {
     }
 }
 
+/// An enum to represent every corner sticker position.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub enum CornerPos {
     UBL,
     UBR,
@@ -576,16 +608,18 @@ pub enum CornerPos {
 }
 
 impl CornerPos {
-    pub fn clockwise(self) -> CornerPos {
+    fn clockwise(self) -> CornerPos {
         let (f1, f2, f3) = self.into();
         (f3, f1, f2).try_into().unwrap()
     }
 
-    pub fn anticlockwise(self) -> CornerPos {
+    fn anticlockwise(self) -> CornerPos {
         let (f1, f2, f3) = self.into();
         (f2, f3, f1).try_into().unwrap()
     }
 
+    /// Returns the corner piece that a corner sticker is on.
+    /// TODO may need to re explain this.
     pub fn piece(self) -> Corner {
         use CornerPos::*;
         match self {
@@ -616,7 +650,8 @@ impl CornerPos {
         }
     }
 
-    // Orientation with U and D on top and bottom
+    /// Returns the corner orientation of a sticker with respect to the U/D axis
+    /// TODO may need to re explain this.
     pub fn ud_orientation(self) -> CornerTwist {
         use CornerPos::*;
         use CornerTwist::*;
@@ -790,23 +825,38 @@ impl From<CornerPos> for (Face, Face, Face) {
     }
 }
 
+/// Represents a sticker relative to the original starting orientation. Using the standard Rubik's
+/// cube colour scheme with white on top and green on front, these stickers would represent:
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Sticker {
+    /// White
     S1,
+    /// Orange
     S2,
+    /// Green
     S3,
+    /// Red
     S4,
+    /// Blue
     S5,
+    /// Yellow
     S6,
 }
 
+/// Enum to represent faces on a cube.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Face {
+    /// Up face
     U,
+    /// Left face
     L,
+    /// Front face
     F,
+    /// Right face
     R,
+    /// Back face
     B,
+    /// Down face
     D,
 }
 
