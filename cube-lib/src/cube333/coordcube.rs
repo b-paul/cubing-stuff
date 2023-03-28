@@ -1,13 +1,13 @@
 use super::CubieCube;
 
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
-pub struct COCoord(u16);
+struct COCoord(u16);
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
-pub struct CPCoord(u16);
+struct CPCoord(u16);
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
-pub struct EOCoord(u16);
+struct EOCoord(u16);
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
-pub struct EPCoord(u32);
+struct EPCoord(u32);
 
 impl From<COCoord> for usize {
     fn from(coord: COCoord) -> usize {
@@ -30,30 +30,33 @@ impl From<EPCoord> for usize {
     }
 }
 
+/// Implementation of a coord cube, representing pieces using coordinates, which are values which
+/// are isomorphic to arrays represented in a cubie cube.
 #[derive(Debug, PartialEq, Eq)]
 pub struct CoordCube {
-    pub co: COCoord,
-    pub cp: CPCoord,
-    pub eo: EOCoord,
-    pub ep: EPCoord,
+    co: COCoord,
+    cp: CPCoord,
+    eo: EOCoord,
+    ep: EPCoord,
 }
 
 impl CoordCube {
+    /// TODO
     pub fn to_cubie(&self) -> CubieCube {
         todo!()
     }
 
-    pub fn solved() -> Self {
-        CoordCube {
-            co: COCoord(0),
-            cp: CPCoord(0),
-            eo: EOCoord(0),
-            ep: EPCoord(0),
-        }
-    }
+    /// The solved cube stored as a const.
+    pub const SOLVED: Self = CoordCube {
+        co: COCoord(0),
+        cp: CPCoord(0),
+        eo: EOCoord(0),
+        ep: EPCoord(0),
+    };
 }
 
 impl CubieCube {
+    /// Converts a CubieCube to a CoordCube.
     pub fn to_coord(&self) -> CoordCube {
         // This looks refactorable, but i'll do it later TODO
         let co = COCoord(Self::to_o_coord::<8, 3>(&self.co.map(|n| n.into())));
@@ -91,7 +94,7 @@ mod tests {
     #[test]
     fn p_coords() {
         // idk how to make more tests for this
-        assert_eq!(CubieCube::to_p_coord::<8>(&[0,1,2,3,4,5,6,7]), 0);
+        assert_eq!(CubieCube::to_p_coord::<8>(&[0, 1, 2, 3, 4, 5, 6, 7]), 0);
     }
 
     use crate::cube333::moves::{Htm, Move, MoveGenerator};

@@ -1,16 +1,26 @@
 use super::CubieCube;
 
+/// Represents each type of move. Note that the `Move` struct uses this variable along with a
+/// counter to represents move such as R2 or U'.
 #[derive(Debug, Clone, Copy)]
 pub enum MoveType {
+    /// Right
     R,
+    /// Left
     L,
+    /// Up
     U,
+    /// Down
     D,
+    /// Front
     F,
+    /// Back
     B,
 }
 
+/// Stores a move type and counter. An anti-clockwise move will have a count of 3.
 #[derive(Copy, Clone)]
+#[allow(missing_docs)]
 pub struct Move {
     pub ty: MoveType,
     pub count: u8,
@@ -27,6 +37,9 @@ impl std::fmt::Debug for Move {
     }
 }
 
+/// A trait to classify a type as a move generator. A move generator is a set which can be used to
+/// generate a set, i.e. find every combination of moves using moves in the move generator to find
+/// unique states.
 pub trait MoveGenerator {
     /// The amount of moves that are available in the moveset.
     const SIZE: usize;
@@ -41,6 +54,9 @@ impl From<Move> for usize {
     }
 }
 
+/// Create a move by specifying a move type and move count. Note that you do not need to specify
+/// for example MoveType::R, you only need to specify R. (TODO check to see if this is a good idea
+/// or not).
 #[macro_export]
 macro_rules! mv {
     ($ty:ident, $count: expr) => {
@@ -51,6 +67,7 @@ macro_rules! mv {
     };
 }
 
+/// Type for Half Turn Metric
 pub struct Htm;
 
 impl MoveGenerator for Htm {
@@ -125,6 +142,7 @@ const EP_OFFSETS: [[usize; 12]; 6] = [
 
 impl CubieCube {
     // This function doesn't really need to be fast since coordinates exist
+    /// Copy the cube, apply a move to it, then return the new cube.
     pub fn make_move(&self, mv: Move) -> CubieCube {
         let mut r = self.clone();
         for _ in 0..mv.count {
