@@ -13,6 +13,8 @@ pub mod edge;
 use corner::*;
 use edge::*;
 
+use crate::generic::{Group, GroupPuzzle};
+
 /// An implementation of a Rubik's cube which represents itself using pieces in an array. A Piece
 /// has an orientation and a permutation to uniquely identify itself. Note that there exists some
 /// CubieCubes which are not solvable (e.g. a corner twist).
@@ -37,6 +39,29 @@ impl CubieCube {
         eo: [EdgeFlip::Oriented; 12],
         ep: Edge::ARRAY,
     };
+}
+
+impl Group for CubieCube {}
+
+use crate::mv;
+
+use moves::{Move, MoveType};
+
+impl GroupPuzzle<Move, 6> for CubieCube {
+    const GENERATOR: [Move; 6] = [
+        mv!(R, 1),
+        mv!(L, 1),
+        mv!(U, 1),
+        mv!(D, 1),
+        mv!(F, 1),
+        mv!(B, 1),
+    ];
+
+    const SOLVED_STATE: Self = Self::SOLVED;
+
+    fn apply_move(&self, mv: moves::Move) -> Self {
+        self.make_move(mv)
+    }
 }
 
 /// An error type for errors related to converting cubes between representations.
