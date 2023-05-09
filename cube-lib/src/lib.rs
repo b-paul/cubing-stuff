@@ -4,6 +4,7 @@
 #![deny(missing_docs)]
 #![feature(array_zip)]
 #![feature(generic_const_exprs)]
+#![feature(array_try_map)]
 
 /// Module for implementations of functionality generic over many different puzzles.
 pub mod generic;
