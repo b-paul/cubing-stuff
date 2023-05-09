@@ -70,12 +70,9 @@ pub trait Coordinate<M: Move, const N: usize, P: GroupPuzzle<M, N> + Clone>:
             }
         }
 
-        // UNWRAP!!!
-        // looking for a function that does [[Option<Self>; N]; M] ->  Option<[[Self; N]; M]>
+        let table = opt_table.try_map(|xs| xs.try_map(|x| x)).ok_or(());
 
-        let table = opt_table.map(|l| l.map(|o| o.unwrap()));
-
-        Ok(table)
+        table
     }
 
     /// Applies a move to some coordinate using a move table.
