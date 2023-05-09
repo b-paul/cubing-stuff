@@ -3,6 +3,9 @@
 
 #![deny(missing_docs)]
 #![feature(array_zip)]
+#![feature(generic_const_exprs)]
 
+/// Module for implementations of functionality generic over many different puzzles.
+pub mod generic;
 /// Module for the 3x3x3 Rubik's cube (the one everyone knows).
 pub mod cube333;
