@@ -3,17 +3,17 @@
 /// Implementation of a cube based on coordinates, which are more performant than arrays when
 /// making moves but harder to work with.
 pub mod coordcube;
-/// Defines move types and implements application of moves to the CubieCube.
-pub mod moves;
 /// Definitions for corner pieces
 pub mod corner;
 /// Definitions for edge pieces
 pub mod edge;
+/// Defines move types and implements application of moves to the CubieCube.
+pub mod moves;
 
 use corner::*;
 use edge::*;
 
-use crate::generic::{Group, GroupPuzzle};
+//use crate::generic::{Group, GroupPuzzle};
 
 /// An implementation of a Rubik's cube which represents itself using pieces in an array. A Piece
 /// has an orientation and a permutation to uniquely identify itself. Note that there exists some
@@ -41,13 +41,18 @@ impl CubieCube {
     };
 }
 
+/*
 impl Group for CubieCube {}
 
 use crate::mv;
 
 use moves::{Move, MoveType};
 
-impl GroupPuzzle<Move, 6> for CubieCube {
+impl GroupPuzzle for CubieCube {
+    type Move = Move;
+
+    const GENERATOR_SIZE: usize = 6;
+
     const GENERATOR: [Move; 6] = [
         mv!(R, 1),
         mv!(L, 1),
@@ -63,6 +68,7 @@ impl GroupPuzzle<Move, 6> for CubieCube {
         self.make_move(mv)
     }
 }
+*/
 
 /// An error type for errors related to converting cubes between representations.
 #[derive(Debug)]
@@ -76,10 +82,20 @@ impl From<CubieCube> for StickerCube {
     fn from(cubie_cube: CubieCube) -> Self {
         let mut sticker_cube = StickerCube::SOLVED;
 
-        for (piece, pos) in cubie_cube.ep.zip(cubie_cube.eo).zip(Edge::ARRAY) {
+        for (piece, pos) in cubie_cube
+            .ep
+            .into_iter()
+            .zip(cubie_cube.eo)
+            .zip(Edge::ARRAY)
+        {
             sticker_cube.place_edge(piece.into(), pos.into());
         }
-        for (piece, pos) in cubie_cube.cp.zip(cubie_cube.co).zip(Corner::ARRAY) {
+        for (piece, pos) in cubie_cube
+            .cp
+            .into_iter()
+            .zip(cubie_cube.co)
+            .zip(Corner::ARRAY)
+        {
             sticker_cube.place_corner(piece.into(), pos.into());
         }
 
