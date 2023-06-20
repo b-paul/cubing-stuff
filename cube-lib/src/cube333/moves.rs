@@ -26,7 +26,7 @@ pub struct Move {
     pub count: u8,
 }
 
-impl crate::generic::Move for Move {}
+//impl crate::generic::Move for Move {}
 
 // I don't want to have the default derive debug for this!
 impl std::fmt::Debug for Move {

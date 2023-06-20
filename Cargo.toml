@@ -6,3 +6,5 @@ members = [
     "fmc-trainers",
     "generator-solver",
 ]
+
+resolver = "1"
