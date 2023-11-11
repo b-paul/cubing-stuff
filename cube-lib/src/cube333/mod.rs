@@ -1,5 +1,8 @@
 // Cube333 module
 
+use crate::TryFromIntToEnumError;
+use thiserror::Error;
+
 /// Implementation of a cube based on coordinates, which are more performant than arrays when
 /// making moves but harder to work with.
 pub mod coordcube;
@@ -10,10 +13,17 @@ pub mod edge;
 /// Defines move types and implements application of moves to the CubieCube.
 pub mod moves;
 
-use corner::*;
-use edge::*;
+use corner::{Corner, CornerPos, CornerTwist};
+use edge::{Edge, EdgeFlip, EdgePos};
 
-//use crate::generic::{Group, GroupPuzzle};
+/// Errors for when converting a stickered piece to a piece type
+#[derive(Debug, Error)]
+pub enum StickerToPieceError {
+    // i dont like this error message :(
+    /// The stickers of a piece did not correspond to a legal piece.
+    #[error("a combination of stickers did not give a valid piece")]
+    InvalidPiece,
+}
 
 /// An implementation of a Rubik's cube which represents itself using pieces in an array. A Piece
 /// has an orientation and a permutation to uniquely identify itself. Note that there exists some
@@ -41,70 +51,45 @@ impl CubieCube {
     };
 }
 
-/*
-impl Group for CubieCube {}
-
-use crate::mv;
-
-use moves::{Move, MoveType};
-
-impl GroupPuzzle for CubieCube {
-    type Move = Move;
-
-    const GENERATOR_SIZE: usize = 6;
-
-    const GENERATOR: [Move; 6] = [
-        mv!(R, 1),
-        mv!(L, 1),
-        mv!(U, 1),
-        mv!(D, 1),
-        mv!(F, 1),
-        mv!(B, 1),
-    ];
-
-    const SOLVED_STATE: Self = Self::SOLVED;
-
-    fn apply_move(&self, mv: moves::Move) -> Self {
-        self.make_move(mv)
-    }
-}
-*/
-
-/// An error type for errors related to converting cubes between representations.
-#[derive(Debug)]
-pub enum StateConversionError {
-    /// An invalid integer value was passed into a function to generate a piece
-    /// orientation/permutation enum value.
-    InvalidValue,
-}
-
 impl From<CubieCube> for StickerCube {
     fn from(cubie_cube: CubieCube) -> Self {
         let mut sticker_cube = StickerCube::SOLVED;
 
-        for (piece, pos) in cubie_cube
+        for ((piece, orientation), pos) in cubie_cube
             .ep
             .into_iter()
             .zip(cubie_cube.eo)
             .zip(Edge::ARRAY)
         {
-            sticker_cube.place_edge(piece.into(), pos.into());
+            sticker_cube.place_edge((piece, orientation).into(), pos.into());
         }
-        for (piece, pos) in cubie_cube
+        for ((piece, orientation), pos) in cubie_cube
             .cp
             .into_iter()
             .zip(cubie_cube.co)
             .zip(Corner::ARRAY)
         {
-            sticker_cube.place_corner(piece.into(), pos.into());
+            sticker_cube.place_corner((piece, orientation).into(), pos.into());
         }
 
         sticker_cube
     }
 }
 
+/// An error type for conversion from a sticker representation to cubie representation.
+#[derive(Debug, Error)]
+pub enum StickerToCubieError {
+    /// A corner had stickers corresponding to an illegal state
+    #[error("The {0} piece has invalid stickers")]
+    BadCorner(Corner),
+
+    /// An edge had stickers corresponding to an illegal state
+    #[error("The {0} piece has invalid stickers")]
+    BadEdge(Edge),
+}
+
 impl TryFrom<StickerCube> for CubieCube {
-    type Error = ();
+    type Error = StickerToCubieError;
 
     fn try_from(sticker_cube: StickerCube) -> Result<Self, Self::Error> {
         let mut co = [CornerTwist::Oriented; 8];
@@ -113,13 +98,17 @@ impl TryFrom<StickerCube> for CubieCube {
         let mut ep = [Edge::UB; 12];
 
         for (i, c) in Corner::ARRAY.into_iter().enumerate() {
-            let corner = sticker_cube.corner_at(c.into())?;
+            let corner = sticker_cube
+                .corner_at(c.into())
+                .map_err(|_| StickerToCubieError::BadCorner(c))?;
             co[i] = corner.ud_orientation();
             cp[i] = corner.piece();
         }
 
         for (i, e) in Edge::ARRAY.into_iter().enumerate() {
-            let edge = sticker_cube.edge_at(e.into())?;
+            let edge = sticker_cube
+                .edge_at(e.into())
+                .map_err(|_| StickerToCubieError::BadEdge(e))?;
             eo[i] = edge.fb_orientation();
             ep[i] = edge.piece();
         }
@@ -137,19 +126,64 @@ pub struct StickerCube {
     pub(crate) centers: [Sticker; 6],
 }
 
-use Sticker::*;
+use Sticker as S;
+
 impl StickerCube {
     /// The solved cube stored as a const.
     pub const SOLVED: StickerCube = StickerCube {
         edges: [
-            S1, S1, S1, S1, S2, S2, S2, S2, S3, S3, S3, S3, S4, S4, S4, S4, S5, S5, S5, S5, S6, S6,
-            S6, S6,
+            S::S1,
+            S::S1,
+            S::S1,
+            S::S1,
+            S::S2,
+            S::S2,
+            S::S2,
+            S::S2,
+            S::S3,
+            S::S3,
+            S::S3,
+            S::S3,
+            S::S4,
+            S::S4,
+            S::S4,
+            S::S4,
+            S::S5,
+            S::S5,
+            S::S5,
+            S::S5,
+            S::S6,
+            S::S6,
+            S::S6,
+            S::S6,
         ],
         corners: [
-            S1, S1, S1, S1, S2, S2, S2, S2, S3, S3, S3, S3, S4, S4, S4, S4, S5, S5, S5, S5, S6, S6,
-            S6, S6,
+            S::S1,
+            S::S1,
+            S::S1,
+            S::S1,
+            S::S2,
+            S::S2,
+            S::S2,
+            S::S2,
+            S::S3,
+            S::S3,
+            S::S3,
+            S::S3,
+            S::S4,
+            S::S4,
+            S::S4,
+            S::S4,
+            S::S5,
+            S::S5,
+            S::S5,
+            S::S5,
+            S::S6,
+            S::S6,
+            S::S6,
+            S::S6,
         ],
-        centers: [S1, S2, S3, S4, S5, S6],
+        centers: [S::S1, S::S2, S::S3, S::S4, S::S5, S::S6],
     };
 
     pub(crate) fn sticker_to_face(&self, sticker: Sticker) -> Face {
@@ -165,7 +199,7 @@ impl StickerCube {
         self.centers[face as usize]
     }
 
-    pub(crate) fn edge_at(&self, pos: EdgePos) -> Result<EdgePos, ()> {
+    pub(crate) fn edge_at(&self, pos: EdgePos) -> Result<EdgePos, StickerToPieceError> {
         let s1 = self[pos];
         let s2 = self[pos.flip()];
         let f1 = self.sticker_to_face(s1);
@@ -173,7 +207,7 @@ impl StickerCube {
         (f1, f2).try_into()
     }
 
-    pub(crate) fn corner_at(&self, pos: CornerPos) -> Result<CornerPos, ()> {
+    pub(crate) fn corner_at(&self, pos: CornerPos) -> Result<CornerPos, StickerToPieceError> {
         let s1 = self[pos];
         let s2 = self[pos.clockwise()];
         let s3 = self[pos.anticlockwise()];
@@ -274,36 +308,36 @@ impl From<Face> for usize {
 }
 
 impl TryFrom<usize> for Face {
-    type Error = ();
+    type Error = TryFromIntToEnumError;
 
     fn try_from(value: usize) -> Result<Self, Self::Error> {
-        use Face::*;
         match value {
-            0 => Ok(U),
-            1 => Ok(L),
-            2 => Ok(F),
-            3 => Ok(R),
-            4 => Ok(B),
-            5 => Ok(D),
-            _ => Err(()),
+            0 => Ok(Face::U),
+            1 => Ok(Face::L),
+            2 => Ok(Face::F),
+            3 => Ok(Face::R),
+            4 => Ok(Face::B),
+            5 => Ok(Face::D),
+            _ => Err(TryFromIntToEnumError::OutOfBounds),
         }
     }
 }
 
 impl std::fmt::Display for StickerCube {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use CornerPos::*;
-        use EdgePos::*;
         fn str(s: Sticker) -> &'static str {
             match s {
-                S1 => "u ",
-                S2 => "l ",
-                S3 => "f ",
-                S4 => "r ",
-                S5 => "b ",
-                S6 => "d ",
+                S::S1 => "u ",
+                S::S2 => "l ",
+                S::S3 => "f ",
+                S::S4 => "r ",
+                S::S5 => "b ",
+                S::S6 => "d ",
             }
         }
+
+        use CornerPos::*;
+        use EdgePos::*;
 
         write!(
             f,
@@ -380,8 +414,8 @@ impl std::fmt::Display for StickerCube {
 mod tests {
     #[test]
     fn pieces_on_solved_cube() {
-        use super::EdgePos::*;
         use super::StickerCube;
+        use super::edge::EdgePos::*;
         assert_eq!(StickerCube::SOLVED.edge_at(UB).unwrap(), UB, "UB");
         assert_eq!(StickerCube::SOLVED.edge_at(UR).unwrap(), UR, "UR");
         assert_eq!(StickerCube::SOLVED.edge_at(UF).unwrap(), UF, "UF");

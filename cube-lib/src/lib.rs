@@ -4,7 +4,17 @@
 #![deny(missing_docs)]
 #![feature(array_try_map)]
 
-/// Module for implementations of functionality generic over many different puzzles.
-pub mod generic;
+use thiserror::Error;
+
+// this shouldnt be in lib.rs but im lazy, will move it later i guess lol
+// it would be nice if there was a way to include the name of the enum in the error message!
+/// Error type for converting integers to (C like) enums using TryFrom
+#[derive(Debug, Error)]
+pub enum TryFromIntToEnumError  {
+    /// attempted to convert integer into enum value, but integer was out of bounds
+    #[error("attempted to convert integer into enum value, but integer was out of bounds")]
+    OutOfBounds
+}
+
 /// Module for the 3x3x3 Rubik's cube (the one everyone knows).
 pub mod cube333;
