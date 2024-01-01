@@ -129,6 +129,26 @@ impl TryFrom<u8> for EdgeFlip {
     }
 }
 
+impl EdgeFlip {
+    /// Flip an edge's orientation.
+    pub fn flip(self) -> EdgeFlip {
+        match self {
+            EdgeFlip::Oriented => EdgeFlip::Flipped,
+            EdgeFlip::Flipped => EdgeFlip::Oriented,
+        }
+    }
+
+    /// Flip an edge's orientation by some value.
+    /// If `flip == EdgeFlip::Oriented`, do nothing to self.
+    /// If `flip == EdgeFlip::Flipped`, flip self.
+    pub fn flip_by(self, flip: EdgeFlip) -> EdgeFlip {
+        match flip {
+            EdgeFlip::Oriented => self,
+            EdgeFlip::Flipped => self.flip(),
+        }
+    }
+}
+
 /// An enum to represent every edge sticker position.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[allow(missing_docs)]
@@ -196,8 +216,9 @@ impl EdgePos {
         }
     }
 
+    // TODO implement eo for other axes.
+
     /// Returns the eo of a piece with respect to the F/B axis.
-    /// TODO! may need to reexplain this + implement eo for other axis.
     pub fn fb_orientation(self) -> EdgeFlip {
         match self {
             EP::UB => EF::Oriented,

@@ -112,6 +112,35 @@ impl TryFrom<u8> for CornerTwist {
     }
 }
 
+impl CornerTwist {
+    /// Twist a corner clockwise.
+    pub fn clockwise(self) -> CornerTwist {
+        match self {
+            CT::Oriented => CT::Clockwise,
+            CT::Clockwise => CT::AntiClockwise,
+            CT::AntiClockwise => CT::Oriented,
+        }
+    }
+
+    /// Twist a corner anticlockwise.
+    pub fn anticlockwise(self) -> CornerTwist {
+        match self {
+            CT::Oriented => CT::AntiClockwise,
+            CT::Clockwise => CT::Oriented,
+            CT::AntiClockwise => CT::Clockwise,
+        }
+    }
+
+    /// Twist a corner by some direction.
+    pub fn twist_by(self, twist: CornerTwist) -> CornerTwist {
+        match twist {
+            CT::Oriented => self,
+            CT::Clockwise => self.clockwise(),
+            CT::AntiClockwise => self.anticlockwise(),
+        }
+    }
+}
+
 /// An enum to represent every corner sticker position.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[allow(missing_docs)]
@@ -155,8 +184,7 @@ impl CornerPos {
         (f2, f3, f1).try_into().unwrap()
     }
 
-    /// Returns the corner piece that a corner sticker is on.
-    /// TODO may need to re explain this.
+    /// Returns the piece that a sticker is on.
     pub fn piece(self) -> Corner {
         match self {
             CP::UBL => Corner::UBL,
@@ -186,8 +214,7 @@ impl CornerPos {
         }
     }
 
-    /// Returns the corner orientation of a sticker with respect to the U/D axis
-    /// TODO may need to re explain this.
+    /// Returns the orientation of a sticker with respect to the U/D axis
     pub fn ud_orientation(self) -> CornerTwist {
         match self {
             CP::UBL => CT::Oriented,
