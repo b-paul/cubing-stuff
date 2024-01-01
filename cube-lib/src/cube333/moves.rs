@@ -57,8 +57,7 @@ impl From<Move> for usize {
 }
 
 /// Create a move by specifying a move type and move count. Note that you do not need to specify
-/// for example MoveType::R, you only need to specify R. (TODO check to see if this is a good idea
-/// or not).
+/// for example MoveType::R, you only need to specify R. (TODO this might not be a good idea).
 #[macro_export]
 macro_rules! mv {
     ($ty:ident, $count: expr) => {
@@ -191,7 +190,6 @@ impl CubieCube {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::cube333::coordcube::*;
     #[test]
     fn r_loop() {
         let mut cube = CubieCube::SOLVED;

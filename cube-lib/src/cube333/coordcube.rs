@@ -1,4 +1,4 @@
-use super::CubieCube;
+use super::{Corner, CornerTwist, CubieCube, Edge, EdgeFlip};
 
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
 struct COCoord(u16);
@@ -41,9 +41,56 @@ pub struct CoordCube {
 }
 
 impl CoordCube {
-    /// TODO
-    pub fn to_cubie(&self) -> CubieCube {
-        todo!()
+    /// Convert a `CoordCube` to a `CubieCube`.
+    pub fn to_cubie(mut self) -> CubieCube {
+        let CubieCube {
+            mut co,
+            mut cp,
+            mut eo,
+            mut ep,
+        } = CubieCube::SOLVED;
+
+        for i in (1..8).rev() {
+            co[i] = ((self.co.0 % 3) as u8)
+                .try_into()
+                .expect("Somehow a mod 3 was out of bounds??");
+            self.co.0 /= 3;
+        }
+
+        for i in (1..12).rev() {
+            eo[i] = ((self.eo.0 % 2) as u8)
+                .try_into()
+                .expect("Somehow a mod 2 was out of bounds??");
+            self.eo.0 /= 2;
+        }
+
+        let mut cp_orders = vec![0];
+        for i in 1..8 {
+            let n = self.cp.0 % (i + 1);
+            cp_orders.push(n);
+            self.cp.0 /= i + 1;
+        }
+        let mut corner_pieces = Corner::ARRAY.into_iter().collect::<Vec<_>>();
+        for (i, n) in cp_orders.into_iter().enumerate().rev() {
+            let j = i - n as usize;
+            cp[i] = corner_pieces[j as usize];
+            corner_pieces.remove(j as usize);
+        }
+
+        let mut ep_orders = vec![0];
+        for i in 1..12 {
+            let n = self.ep.0 % (i + 1);
+            ep_orders.push(n);
+            self.ep.0 /= i + 1;
+        }
+        let mut edge_pieces = Edge::ARRAY.into_iter().collect::<Vec<_>>();
+        for (i, n) in ep_orders.into_iter().enumerate().rev() {
+            let j = i - n as usize;
+            ep[i] = edge_pieces[j as usize];
+            edge_pieces.remove(j as usize);
+        }
+
+        CubieCube { co, cp, eo, ep }
     }
 
     /// The solved cube stored as a const.
@@ -55,160 +102,88 @@ impl CoordCube {
     };
 }
 
+fn to_o_coord<const COUNT: usize, const STATES: u16>(arr: &[u8; COUNT]) -> u16 {
+    arr.iter()
+        .skip(1)
+        .fold(0, |acc, &i| (acc * STATES) + i as u16)
+}
+
+// TODO this is kinda unreadable lol
+fn to_p_coord<const COUNT: usize>(arr: &[u8; COUNT]) -> u32 {
+    (1..COUNT).rev().fold(0, |acc, idx| {
+        (acc * (idx + 1) as u32) + arr[0..idx].iter().filter(|&&x| x > arr[idx]).count() as u32
+    })
+}
+
+/// Error for when converting from a `CubieCube` to a `CoordCube`.
+/// Errors can occur in this case when the `CubieCube` is in an illegal state caused by an edge
+/// flip, a corner twist, or permutation parity.
+#[derive(Debug)]
+pub struct CubieToCoordError {
+    /// The edge flip coset we are in.
+    pub eo: EdgeFlip,
+    /// The corner twist coset we are in.
+    pub co: CornerTwist,
+    /// Whether we have permutation parity or not.
+    pub perm: bool,
+}
+
+impl std::fmt::Display for CubieToCoordError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // idk how i feel about this :grimacing:
+        if self.eo == EdgeFlip::Flipped {
+            writeln!(f, "This cube has a flipped edge!")?;
+        }
+        if self.co == CornerTwist::Clockwise {
+            writeln!(f, "This cube has a clockwise twisted corner!")?;
+        }
+        if self.co == CornerTwist::AntiClockwise {
+            writeln!(f, "This cube has an anticlockwise twisted corner!")?;
+        }
+        if self.perm {
+            writeln!(f, "This cube has permutation parity!")?;
+        }
+        Ok(())
+    }
+}
+impl std::error::Error for CubieToCoordError {}
+
 impl CubieCube {
-    /// Converts a CubieCube to a CoordCube.
-    pub fn to_coord(&self) -> CoordCube {
-        // This looks refactorable, but i'll do it later TODO
-        let co = COCoord(Self::to_o_coord::<8, 3>(&self.co.map(|n| n.into())));
-        let cp = CPCoord(Self::to_p_coord::<8>(&self.cp.map(|n| n.into())) as u16);
-        let eo = EOCoord(Self::to_o_coord::<12, 2>(&self.eo.map(|n| n.into())));
-        let ep = EPCoord(Self::to_p_coord::<12>(&self.ep.map(|n| n.into())));
+    /// Tries to convert a `CubieCube` to a `CoordCube`.
+    pub fn to_coord(&self) -> Result<CoordCube, CubieToCoordError> {
+        if self.illegal() {
+            return Err(CubieToCoordError {
+                eo: self.eo_parity(),
+                co: self.co_parity(),
+                perm: self.perm_parity(),
+            });
+        }
 
-        CoordCube { co, cp, eo, ep }
-    }
+        let co = COCoord(to_o_coord::<8, 3>(&self.co.map(|n| n.into())));
+        let cp = CPCoord(to_p_coord::<8>(&self.cp.map(|n| n.into())) as u16);
+        let eo = EOCoord(to_o_coord::<12, 2>(&self.eo.map(|n| n.into())));
+        let ep = EPCoord(to_p_coord::<12>(&self.ep.map(|n| n.into())));
 
-    fn to_o_coord<const COUNT: usize, const STATES: u16>(arr: &[u8; COUNT]) -> u16 {
-        arr.iter()
-            .skip(1)
-            .fold(0, |acc, &i| (acc * STATES) + i as u16)
-    }
-
-    pub(crate) fn to_p_coord<const COUNT: usize>(arr: &[u8; COUNT]) -> u32 {
-        (1..COUNT).rev().fold(0, |acc, idx| {
-            (acc + arr[0..idx].iter().filter(|&x| *x > arr[idx]).count() as u32) * idx as u32
-        })
+        Ok(CoordCube { co, cp, eo, ep })
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    /*
+    use crate::cube333::{
+        coordcube::CoordCube,
+        moves::{Move, MoveType},
+        CubieCube,
+        StickerCube
+    };
+    use crate::mv;
     #[test]
-    fn invert_identity() {
-        let identity = CoordCube::solved();
-        assert_eq!(identity, identity.to_cubie().to_coord())
-    }
-    */
-
-    #[test]
-    fn p_coords() {
-        // idk how to make more tests for this
-        assert_eq!(CubieCube::to_p_coord::<8>(&[0, 1, 2, 3, 4, 5, 6, 7]), 0);
-    }
-
-    use crate::cube333::moves::{Htm, Move, MoveGenerator};
-    use proptest::strategy::{Strategy, ValueTree};
-    use proptest::test_runner::TestRunner;
-    #[test]
-    fn moves_work() {
-        // proptest
-        let mut runner = TestRunner::default();
-        for _ in 0..256 {
-            let mut mvs = vec![];
-            for _ in 0..(0..40usize).new_tree(&mut runner).unwrap().current() {
-                let val = (0..18usize).new_tree(&mut runner).unwrap();
-                let mv = Htm::MOVE_LIST[val.current()];
-                mvs.push(mv);
-            }
-            println!("{:?}", mvs);
-            // Now we want to apply the sequence of moves to a cubiecube and a coordinatecube made
-            // from that cubie cube, then convert the resulting coordinatecube into a cubiecube and
-            // check if the two cubiecubes are the same
-        }
+    fn invertable_conversion() {
+        assert_eq!(CubieCube::SOLVED.to_coord().unwrap(), CoordCube::SOLVED);
+        assert_eq!(CoordCube::SOLVED.to_cubie(), CubieCube::SOLVED);
+        let cube = CubieCube::SOLVED.make_move(mv!(U, 1));
+        println!("{}", StickerCube::from(cube.clone()));
+        println!("{}", StickerCube::from(cube.clone().to_coord().unwrap().to_cubie()));
+        assert_eq!(cube.to_coord().unwrap().to_cubie(), cube);
     }
 }
-
-/*
-impl CoordCube {
-    #[inline]
-    fn to_cubie_o<const SIZE: usize>(mut cord: u16, and: u8, modulo: u8, shift: u8) -> [u8; SIZE] {
-        let mut o = [0; SIZE];
-        let mut sum = 0;
-        for o in o.iter_mut().take(SIZE - 2) {
-            let digit: u16 = cord & (and as u16);
-            for i in 0..(and - 1) {
-                if digit == u16::from(i) {
-                    *o = i;
-                    sum += i;
-                    break;
-                }
-            }
-            cord >>= shift;
-        }
-        o[SIZE - 1] = sum % modulo;
-        o
-    }
-
-    // Add error handling maybe? idk
-    // Error handling should be done on cubie creation
-    pub fn to_cubie(&self) -> CubieCube {
-        let co: [u8; 8] = CoordCube::to_cubie_o(self.co, 3, 3, 2);
-        let eo: [u8; 12] = CoordCube::to_cubie_o(self.eo, 1, 2, 1);
-
-        // CP/EP
-        // First digit is a number from 0-7
-        // Next digit is a number from 0-6 (exclude the previous number)
-        // etc
-        // looking to de duplicate ize this
-        let mut cp: [u8; 8] = [0; 8];
-        let mut cpcord = self.cp;
-        let mut v: Vec<usize> = (0..8).collect();
-        for index in (0..8).rev() {
-            cp[index] = v.remove(cpcord as usize % (index + 1)) as u8;
-            cpcord /= (index + 1) as u16;
-        }
-
-        let mut ep: [u8; 12] = [0; 12];
-        let mut epcord = self.ep;
-        let mut v: Vec<usize> = (0..12).collect();
-        for index in (0..12).rev() {
-            ep[index] = v.remove(epcord as usize % (index + 1)) as u8;
-            epcord /= (index + 1) as u32;
-        }
-
-        CubieCube { co, cp, eo, ep }
-    }
-}
-
-impl CubieCube {
-    pub fn to_coord_o<const SIZE: usize>(cubie: [u8; SIZE], shift: usize) -> u16 {
-        let mut o: u16 = 0;
-        for i in cubie {
-            o += i as u16;
-
-            o <<= shift;
-        }
-
-        o
-    }
-
-    pub fn to_coord(&self) -> CoordCube {
-        let co = CubieCube::to_coord_o(self.co, 2);
-        let eo = CubieCube::to_coord_o(self.eo, 1);
-
-        // yikes bad code
-        let mut cp: u16 = 0;
-        let mut v = vec![0, 1, 2, 3, 4, 5, 6, 7];
-
-        for index in (0..8).rev() {
-            let pos = v.iter().position(|&r| r == self.cp[index] as u16).unwrap() as u16;
-            cp += pos;
-            v.remove(pos as usize);
-            cp *= (index + 1) as u16;
-        }
-
-        let mut ep: u32 = 0;
-        let mut v = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-
-        for index in (0..12).rev() {
-            let pos = v.iter().position(|&r| r == self.ep[index] as u16).unwrap() as u32;
-            ep += pos;
-            v.remove(pos as usize);
-            ep *= (index + 1) as u32;
-        }
-
-        CoordCube { co, cp, eo, ep }
-    }
-}
-*/

@@ -13,6 +13,8 @@ pub mod edge;
 /// Defines move types and implements application of moves to the CubieCube.
 pub mod moves;
 
+mod cubiecube;
+
 use corner::{Corner, CornerPos, CornerTwist};
 use edge::{Edge, EdgeFlip, EdgePos};
 
@@ -27,7 +29,7 @@ pub enum StickerToPieceError {
 
 /// An implementation of a Rubik's cube which represents itself using pieces in an array. A Piece
 /// has an orientation and a permutation to uniquely identify itself. Note that there exists some
-/// CubieCubes which are not solvable (e.g. a corner twist).
+/// `CubieCube` states which are not solvable (e.g. a corner twist).
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct CubieCube {
     // May want to make these values not public
@@ -119,7 +121,7 @@ impl TryFrom<StickerCube> for CubieCube {
 
 /// A Rubik's cube implementation that represents itself using stickers. Faces go in the order of
 /// UP LEFT FRONT RIGHT BACK DOWN. Stickers go left to right, top to bottom, starting at the top
-/// right.
+/// right. Note that many illegal states are representable with a `StickerCube`.
 pub struct StickerCube {
     pub(crate) edges: [Sticker; 24],
     pub(crate) corners: [Sticker; 24],
