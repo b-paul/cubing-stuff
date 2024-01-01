@@ -50,19 +50,32 @@ impl CoordCube {
             mut ep,
         } = CubieCube::SOLVED;
 
+        let mut co_sum = 0;
         for i in (1..8).rev() {
             co[i] = ((self.co.0 % 3) as u8)
                 .try_into()
                 .expect("Somehow a mod 3 was out of bounds??");
+            co_sum += 3 - (self.co.0 % 3) as u8;
+            co_sum %= 3;
             self.co.0 /= 3;
         }
+        co[0] = co_sum
+            .try_into()
+            .expect("Somehow a mod 2 was out of bounds??");
 
+        let mut eo_sum = 0;
         for i in (1..12).rev() {
             eo[i] = ((self.eo.0 % 2) as u8)
                 .try_into()
                 .expect("Somehow a mod 2 was out of bounds??");
+            eo_sum += 2 - (self.eo.0 % 2) as u8;
+            eo_sum %= 2;
             self.eo.0 /= 2;
         }
+        assert!(self.co.0 % 3 == self.co.0);
+        eo[0] = eo_sum
+            .try_into()
+            .expect("Somehow a mod 2 was out of bounds??");
 
         let mut cp_orders = vec![0];
         for i in 1..8 {
@@ -173,17 +186,23 @@ mod tests {
     use crate::cube333::{
         coordcube::CoordCube,
         moves::{Move, MoveType},
-        CubieCube,
-        StickerCube
+        CubieCube, StickerCube,
     };
     use crate::mv;
     #[test]
     fn invertable_conversion() {
         assert_eq!(CubieCube::SOLVED.to_coord().unwrap(), CoordCube::SOLVED);
         assert_eq!(CoordCube::SOLVED.to_cubie(), CubieCube::SOLVED);
-        let cube = CubieCube::SOLVED.make_move(mv!(U, 1));
+        let mut cube = CubieCube::SOLVED;
+        for _ in 0..10 {
+            cube = cube.make_move(mv!(U, 1));
+            cube = cube.make_move(mv!(F, 1));
+        }
         println!("{}", StickerCube::from(cube.clone()));
-        println!("{}", StickerCube::from(cube.clone().to_coord().unwrap().to_cubie()));
+        println!(
+            "{}",
+            StickerCube::from(cube.clone().to_coord().unwrap().to_cubie())
+        );
         assert_eq!(cube.to_coord().unwrap().to_cubie(), cube);
     }
 }
