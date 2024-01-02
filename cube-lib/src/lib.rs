@@ -2,7 +2,7 @@
 //! related to them. This is mostly for personal use.
 
 #![deny(missing_docs)]
-#![feature(array_try_map)]
+#![feature(slice_group_by)]
 
 use thiserror::Error;
 
@@ -16,5 +16,5 @@ pub enum TryFromIntToEnumError  {
     OutOfBounds
 }
 
-/// Module for the 3x3x3 Rubik's cube (the one everyone knows).
 pub mod cube333;
+pub mod moves;

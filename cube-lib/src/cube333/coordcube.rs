@@ -61,7 +61,7 @@ impl CoordCube {
         }
         co[0] = co_sum
             .try_into()
-            .expect("Somehow a mod 2 was out of bounds??");
+            .expect("Somehow a mod 3 was out of bounds??");
 
         let mut eo_sum = 0;
         for i in (1..12).rev() {
@@ -86,8 +86,8 @@ impl CoordCube {
         let mut corner_pieces = Corner::ARRAY.into_iter().collect::<Vec<_>>();
         for (i, n) in cp_orders.into_iter().enumerate().rev() {
             let j = i - n as usize;
-            cp[i] = corner_pieces[j as usize];
-            corner_pieces.remove(j as usize);
+            cp[i] = corner_pieces[j];
+            corner_pieces.remove(j);
         }
 
         let mut ep_orders = vec![0];
@@ -99,8 +99,8 @@ impl CoordCube {
         let mut edge_pieces = Edge::ARRAY.into_iter().collect::<Vec<_>>();
         for (i, n) in ep_orders.into_iter().enumerate().rev() {
             let j = i - n as usize;
-            ep[i] = edge_pieces[j as usize];
-            edge_pieces.remove(j as usize);
+            ep[i] = edge_pieces[j];
+            edge_pieces.remove(j);
         }
 
         CubieCube { co, cp, eo, ep }
@@ -185,7 +185,7 @@ impl CubieCube {
 mod tests {
     use crate::cube333::{
         coordcube::CoordCube,
-        moves::{Move, MoveType},
+        moves::{Move333, Move333Type},
         CubieCube, StickerCube,
     };
     use crate::mv;

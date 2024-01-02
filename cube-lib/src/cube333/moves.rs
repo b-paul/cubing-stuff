@@ -2,8 +2,8 @@ use super::CubieCube;
 
 /// Represents each type of move. Note that the `Move` struct uses this variable along with a
 /// counter to represents move such as R2 or U'.
-#[derive(Debug, Clone, Copy)]
-pub enum MoveType {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Move333Type {
     /// Right
     R,
     /// Left
@@ -19,17 +19,51 @@ pub enum MoveType {
 }
 
 /// Stores a move type and counter. An anti-clockwise move will have a count of 3.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[allow(missing_docs)]
-pub struct Move {
-    pub ty: MoveType,
+pub struct Move333 {
+    pub ty: Move333Type,
     pub count: u8,
 }
 
-//impl crate::generic::Move for Move {}
+impl crate::moves::Move for Move333 {
+    fn inverse(self) -> Self {
+        Self {
+            ty: self.ty,
+            count: (4 - self.count).rem_euclid(4),
+        }
+    }
+
+    fn commutes_with(&self, b: &Self) -> bool {
+        use Move333Type as MT;
+        match self.ty {
+            MT::R | MT::L => [MT::R, MT::L].contains(&b.ty),
+            MT::U | MT::D => [MT::U, MT::D].contains(&b.ty),
+            MT::F | MT::B => [MT::F, MT::B].contains(&b.ty),
+        }
+    }
+
+    /* TODO
+    fn cancel(self, b: Self) -> [Option<Self>; 2] {
+        if self.ty == b.ty {
+            let mv = Move333 {
+                ty: self.ty,
+                count: (self.count + b.count) % 4,
+            };
+            let mv = (mv.count != 0).then_some(mv);
+            [
+                mv,
+                None
+            ]
+        } else {
+            [Some(self), Some(b)]
+        }
+    }
+    */
+}
 
 // I don't want to have the default derive debug for this!
-impl std::fmt::Debug for Move {
+impl std::fmt::Debug for Move333 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.count {
             1 => write!(f, "{:?}", self.ty),
@@ -47,22 +81,22 @@ pub trait MoveGenerator {
     const SIZE: usize;
     /// A list of all valid moves. The index of a move in this list will be the same index used
     /// when accessing the move table.
-    const MOVE_LIST: &'static [Move];
+    const MOVE_LIST: &'static [Move333];
 }
 
-impl From<Move> for usize {
-    fn from(mv: Move) -> usize {
+impl From<Move333> for usize {
+    fn from(mv: Move333) -> usize {
         (mv.count as usize - 1) * 6 + mv.ty as usize
     }
 }
 
 /// Create a move by specifying a move type and move count. Note that you do not need to specify
-/// for example MoveType::R, you only need to specify R. (TODO this might not be a good idea).
+/// for example Move333Type::R, you only need to specify R. (TODO this might not be a good idea).
 #[macro_export]
 macro_rules! mv {
     ($ty:ident, $count: expr) => {
-        Move {
-            ty: MoveType::$ty,
+        Move333 {
+            ty: Move333Type::$ty,
             count: $count,
         }
     };
@@ -73,7 +107,7 @@ pub struct Htm;
 
 impl MoveGenerator for Htm {
     const SIZE: usize = 18;
-    const MOVE_LIST: &'static [Move] = &[
+    const MOVE_LIST: &'static [Move333] = &[
         mv!(R, 1),
         mv!(L, 1),
         mv!(U, 1),
@@ -95,15 +129,15 @@ impl MoveGenerator for Htm {
     ];
 }
 
-impl From<MoveType> for usize {
-    fn from(mv: MoveType) -> Self {
+impl From<Move333Type> for usize {
+    fn from(mv: Move333Type) -> Self {
         match mv {
-            MoveType::R => 0,
-            MoveType::L => 1,
-            MoveType::U => 2,
-            MoveType::D => 3,
-            MoveType::F => 4,
-            MoveType::B => 5,
+            Move333Type::R => 0,
+            Move333Type::L => 1,
+            Move333Type::U => 2,
+            Move333Type::D => 3,
+            Move333Type::F => 4,
+            Move333Type::B => 5,
         }
     }
 }
@@ -144,7 +178,7 @@ const EP_OFFSETS: [[usize; 12]; 6] = [
 impl CubieCube {
     // This function doesn't really need to be fast since coordinates exist
     /// Copy the cube, apply a move to it, then return the new cube.
-    pub fn make_move(&self, mv: Move) -> CubieCube {
+    pub fn make_move(&self, mv: Move333) -> CubieCube {
         let mut r = self.clone();
         for _ in 0..mv.count {
             r = r.make_move_type(mv.ty);
@@ -152,7 +186,7 @@ impl CubieCube {
         r
     }
 
-    fn make_move_type(&self, mv: MoveType) -> CubieCube {
+    fn make_move_type(&self, mv: Move333Type) -> CubieCube {
         let co_offsets = CO_OFFSETS[mv as usize];
         let cp_offsets = CP_OFFSETS[mv as usize];
         let eo_offsets = EO_OFFSETS[mv as usize];
@@ -194,8 +228,8 @@ mod tests {
     fn r_loop() {
         let mut cube = CubieCube::SOLVED;
         for _ in 0..4 {
-            cube = cube.make_move(Move {
-                ty: MoveType::B,
+            cube = cube.make_move(Move333 {
+                ty: Move333Type::B,
                 count: 1,
             });
         }
