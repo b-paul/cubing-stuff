@@ -1,4 +1,5 @@
 // Cube333 module
+//! Module for the 3x3x3 Rubik's cube (the one everyone knows).
 
 use crate::TryFromIntToEnumError;
 use thiserror::Error;
