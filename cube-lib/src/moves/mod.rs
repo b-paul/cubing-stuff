@@ -1,7 +1,25 @@
 //! Module for puzzle move generics and related functionality
 
+/// Enum for representing the cancellation of two moves.
+/// See [`cancel`](Move::cancel).
+#[derive(Eq, PartialEq)]
+pub enum Cancellation<M: Move> {
+    /// The moves cancelled completely.
+    ///
+    /// e.g. `R R'` cancels completely
+    NoMove,
+    /// The moves cancelled into one move.
+    ///
+    /// e.g. `R R` cancels into `R2`
+    OneMove(M),
+    /// The moves didn't cancel
+    ///
+    /// e.g. `R U` stays as `R U` when cancelling
+    TwoMove(M, M),
+}
+
 /// Type of move that can be made to a puzzle.
-pub trait Move {
+pub trait Move: Eq {
     /// Invert a move.
     ///
     /// If `X` is a moves and `X^{-1}` is its inverse and `o` is composition, then
@@ -16,64 +34,78 @@ pub trait Move {
     /// `A B = B A`
     fn commutes_with(&self, b: &Self) -> bool;
 
-    /* TODO
-    /// Returns the cancelled list of the moves `self` and `b`, with None signifying no move.
+    /// Return the cancellation of two moves.
     ///
-    /// - It is assumed that if a and b don't cancel, then `a.cancel(b) = [Some(a), Some(b)]`.
-    /// - It is assumed that commutativity and non-commutativity are preserved under cancallation.
-    /// - It is assumed that `a.cancel(a)` always cancels.
-    /// - It is also assumed that `a.cancel(b) == b.cancel(a)` if and only if a and b cancel.
+    /// It is assumed that group axioms hold when applying cancellations.
     ///
     /// ```rust
-    /// # use cube_lib::mv;
-    /// # use cube_lib::cube333::moves::{Move333, Move333Type};
-    /// # use cube_lib::moves::Move;
     /// # fn main() {
-    /// assert_eq!(mv!(R, 1).cancel(mv!(U, 3)), [Some(mv!(R, 1)), Some(mv!(U, 3))]);
-    /// assert_eq!(mv!(R, 1).cancel(mv!(R, 1)), [Some(mv!(R, 2)), None]);
-    /// assert_eq!(mv!(R, 1).cancel(mv!(R, 3)), [None, None]);
+    /// use cube_lib::mv;
+    /// use cube_lib::cube333::moves::{Move333, Move333Type};
+    /// use cube_lib::moves::{Cancellation, Move};
+    ///
+    /// // In the context of a 3x3x3 Rubik's cube
+    /// assert!(mv!(R, 1).cancel(mv!(U, 3)) == Cancellation::TwoMove(mv!(R, 1), mv!(U, 3)));
+    /// assert!(mv!(R, 1).cancel(mv!(R, 1)) == Cancellation::OneMove(mv!(R, 2)));
+    /// assert!(mv!(R, 1).cancel(mv!(R, 3)) == Cancellation::NoMove);
     /// # }
     /// ```
-    fn cancel(self, b: Self) -> [Option<Self>; 2]
+    fn cancel(self, b: Self) -> Cancellation<Self>
     where
         Self: Sized;
-    */
 }
 
 /// A sequence of moves (also known as an algorithm) for some specific type of move.
-pub struct MoveSequence<M: Move>(Vec<M>);
+#[derive(Eq, PartialEq)]
+pub struct MoveSequence<M: Move>(pub Vec<M>);
 
 impl<M: Move> MoveSequence<M> {
     /// Invert a sequence of moves.
     ///
     /// If `X` is a sequence of moves and `X^{-1}` is its inverse and `o` is composition, then
     /// `X o X^{-1} = X^{-1} o X = e` where `e` is the empty sequence.
-    pub fn invert(self) -> Self {
+    pub fn inverse(self) -> Self {
         Self(self.0.into_iter().rev().map(|m| m.inverse()).collect())
     }
 
-    /* TODO
-    /// Cancel an alg completely, including rearrangement of commutative moves (I'm so scared of
-    /// writing this aaahhhh)
-    pub fn cancel(self) -> Self {
-        Self(self.0.group_by(|a, b| a.commutes_with(b)).flat_map(|moves| {
-            // This is an extra vec that isn't needed! We could just work on a singular global vec
-            // but yuck
-            let mut cancelled_moves = Vec::new();
+    /// Cancel an alg completely, including rearrangement of commutative moves. This guarantees
+    /// optimal move count from cancellations.
+    pub fn cancel(mut self) -> Self {
+        let mut cancellation = Vec::new();
+        let mut commuting_start = 0;
 
-            for mv in moves {
-                for mv2 in cancelled_moves.iter_mut() {
-                    /*
-                    if let Some(mv) = mv.cancel(mv2) {
-                        mv2 = mv;
-                        break;
+        for next_mv in self.0.drain(..) {
+            let i = cancellation.len();
+            if cancellation
+                .last()
+                .is_some_and(|m| next_mv.commutes_with(m))
+            {
+                cancellation.push(next_mv);
+                for j in (commuting_start..i).rev() {
+                    cancellation.swap(i - 1, j);
+                    let next_mv = cancellation.pop().unwrap();
+                    let mv = cancellation.pop().unwrap();
+                    match mv.cancel(next_mv) {
+                        Cancellation::NoMove => {
+                            commuting_start = commuting_start.min(i - 2);
+                            break;
+                        }
+                        Cancellation::OneMove(mv) => {
+                            cancellation.push(mv);
+                            break;
+                        }
+                        Cancellation::TwoMove(mv, next_mv) => {
+                            cancellation.push(mv);
+                            cancellation.push(next_mv);
+                        }
                     }
-                    */
                 }
+            } else {
+                cancellation.push(next_mv);
+                commuting_start = i;
             }
+        }
 
-            cancelled_moves
-        }).collect())
+        Self(cancellation)
     }
-    */
 }
