@@ -1,4 +1,5 @@
 use super::CubieCube;
+use crate::moves::Cancellation;
 
 /// Represents each type of move. Note that the `Move` struct uses this variable along with a
 /// counter to represents move such as R2 or U'.
@@ -43,23 +44,24 @@ impl crate::moves::Move for Move333 {
         }
     }
 
-    /* TODO
-    fn cancel(self, b: Self) -> [Option<Self>; 2] {
+    fn cancel(self, b: Self) -> Cancellation<Self>
+    where
+        Self: Sized,
+    {
         if self.ty == b.ty {
-            let mv = Move333 {
-                ty: self.ty,
-                count: (self.count + b.count) % 4,
-            };
-            let mv = (mv.count != 0).then_some(mv);
-            [
-                mv,
-                None
-            ]
+            let count = (self.count + b.count) % 4;
+            if count == 0 {
+                Cancellation::NoMove
+            } else {
+                Cancellation::OneMove(Move333 {
+                    ty: self.ty,
+                    count,
+                })
+            }
         } else {
-            [Some(self), Some(b)]
+            Cancellation::TwoMove(self, b)
         }
     }
-    */
 }
 
 // I don't want to have the default derive debug for this!
