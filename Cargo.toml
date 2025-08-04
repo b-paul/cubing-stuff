@@ -1,10 +1,9 @@
 [workspace]
 
 members = [
-    "cube-lib",
-
     "fmc-trainers",
     "generator-solver",
+    "pin-orders",
 ]
 
 resolver = "1"

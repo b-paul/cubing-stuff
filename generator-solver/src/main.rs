@@ -1,80 +1,80 @@
 use cube_lib::cube333::{
-    moves::{Htm, Move, MoveGenerator, MoveType},
+    moves::{Htm, Move333, MoveGenerator, Move333Type},
     CubieCube,
 };
 use rand::seq::IteratorRandom;
-use std::collections::HashSet;
+use std::collections::{HashSet, HashMap, VecDeque};
 
-const U1: Move = Move {
-    ty: MoveType::U,
+const U1: Move333 = Move333 {
+    ty: Move333Type::U,
     count: 1,
 };
-const D1: Move = Move {
-    ty: MoveType::D,
+const D1: Move333 = Move333 {
+    ty: Move333Type::D,
     count: 1,
 };
-const R1: Move = Move {
-    ty: MoveType::R,
+const R1: Move333 = Move333 {
+    ty: Move333Type::R,
     count: 1,
 };
-const L1: Move = Move {
-    ty: MoveType::L,
+const L1: Move333 = Move333 {
+    ty: Move333Type::L,
     count: 1,
 };
-const F1: Move = Move {
-    ty: MoveType::F,
+const F1: Move333 = Move333 {
+    ty: Move333Type::F,
     count: 1,
 };
-const B1: Move = Move {
-    ty: MoveType::B,
+const B1: Move333 = Move333 {
+    ty: Move333Type::B,
     count: 2,
 };
-const U2: Move = Move {
-    ty: MoveType::U,
+const U2: Move333 = Move333 {
+    ty: Move333Type::U,
     count: 2,
 };
-const D2: Move = Move {
-    ty: MoveType::D,
+const D2: Move333 = Move333 {
+    ty: Move333Type::D,
     count: 2,
 };
-const R2: Move = Move {
-    ty: MoveType::R,
+const R2: Move333 = Move333 {
+    ty: Move333Type::R,
     count: 2,
 };
-const L2: Move = Move {
-    ty: MoveType::L,
+const L2: Move333 = Move333 {
+    ty: Move333Type::L,
     count: 2,
 };
-const F2: Move = Move {
-    ty: MoveType::F,
+const F2: Move333 = Move333 {
+    ty: Move333Type::F,
     count: 2,
 };
-const B2: Move = Move {
-    ty: MoveType::B,
+const B2: Move333 = Move333 {
+    ty: Move333Type::B,
     count: 2,
 };
-const U3: Move = Move {
-    ty: MoveType::U,
+const U3: Move333 = Move333 {
+    ty: Move333Type::U,
     count: 3,
 };
-const D3: Move = Move {
-    ty: MoveType::D,
+const D3: Move333 = Move333 {
+    ty: Move333Type::D,
     count: 3,
 };
-const R3: Move = Move {
-    ty: MoveType::R,
+const R3: Move333 = Move333 {
+    ty: Move333Type::R,
     count: 3,
 };
-const L3: Move = Move {
-    ty: MoveType::L,
+const L3: Move333 = Move333 {
+    ty: Move333Type::L,
     count: 3,
 };
-const F3: Move = Move {
-    ty: MoveType::F,
+const F3: Move333 = Move333 {
+    ty: Move333Type::F,
     count: 3,
 };
-const B3: Move = Move {
-    ty: MoveType::B,
+const B3: Move333 = Move333 {
+    ty: Move333Type::B,
     count: 3,
 };
 
@@ -83,12 +83,12 @@ pub struct Htr;
 
 impl MoveGenerator for Fr {
     const SIZE: usize = 4;
-    const MOVE_LIST: &'static [Move] = &[R2, L2, F2, B2];
+    const MOVE_LIST: &'static [Move333] = &[R2, L2, F2, B2];
 }
 
 impl MoveGenerator for Htr {
     const SIZE: usize = 6;
-    const MOVE_LIST: &'static [Move] = &[U2, D2, R2, L2, F2, B2];
+    const MOVE_LIST: &'static [Move333] = &[U2, D2, R2, L2, F2, B2];
 }
 
 #[derive(Debug)]
@@ -106,10 +106,35 @@ impl GeneratorSet {
         while let Some(cube) = stack.pop() {
             set.insert(cube.clone());
 
-            for mv in G::MOVE_LIST {
-                let new_cube = cube.make_move(*mv);
+            for &mv in G::MOVE_LIST {
+                let new_cube = cube.make_move(mv);
                 if !set.contains(&new_cube) {
                     stack.push(new_cube);
+                }
+            }
+        }
+
+        GeneratorSet { set }
+    }
+
+    fn from_generator_trait_print_solns<G: MoveGenerator>(cube: CubieCube) -> Self {
+        // BFS on solved cube
+        let mut set = HashSet::new();
+
+        let mut queue = VecDeque::new();
+        queue.push_back((cube.clone(), vec![]));
+        set.insert(cube);
+
+        while let Some((cube, soln)) = queue.pop_front() {
+            println!("{}", soln.iter().cloned().map(|mv| format!("{mv:?}")).collect::<Vec<_>>().join(" "));
+
+            for &mv in G::MOVE_LIST {
+                let new_cube = cube.make_move(mv);
+                if !set.contains(&new_cube) {
+                    set.insert(new_cube.clone());
+                    let mut soln2 = soln.clone();
+                    soln2.push(mv);
+                    queue.push_back((new_cube, soln2));
                 }
             }
         }
@@ -248,7 +273,7 @@ fn search<G: MoveGenerator>(
     cube: CubieCube,
     set: &GeneratorSet,
     depth: usize,
-) -> Option<Vec<Move>> {
+) -> Option<Vec<Move333>> {
     if depth == 0 {
         if set.set.contains(&cube) {
             return Some(vec![]);
@@ -265,7 +290,7 @@ fn search<G: MoveGenerator>(
     None
 }
 
-fn solve<G: MoveGenerator>(cube: CubieCube, set: &GeneratorSet) -> Vec<Move> {
+fn solve<G: MoveGenerator>(cube: CubieCube, set: &GeneratorSet) -> Vec<Move333> {
     for depth in 0..32 {
         if let Some(mut sol) = search::<G>(cube.clone(), set, depth) {
             sol.reverse();
@@ -280,12 +305,9 @@ fn main() {
     let slice_set = GeneratorSet::slice_set();
     let fr_set = GeneratorSet::from_generator_trait::<Fr>(CubieCube::SOLVED);
     let fr_slice_set = slice_set.product::<Fr>();
-    println!(
-        "Floppy reduction set generated with {} elements",
-        fr_set.set.len()
-    );
-    let htr_set = GeneratorSet::from_generator_trait::<Htr>(CubieCube::SOLVED);
-    println!("HTR set generated with {} elements", htr_set.set.len());
+    //println!("Floppy reduction set generated with {} elements", fr_set.set.len());
+    let htr_set = GeneratorSet::from_generator_trait_print_solns::<Htr>(CubieCube::SOLVED);
+    //println!("HTR set generated with {} elements", htr_set.set.len());
 
     /*
     let mut cube = CubieCube::SOLVED;
@@ -303,8 +325,10 @@ fn main() {
     println!("{:?}", seq);
     */
 
+    /*
     for cube in htr_set.set.iter() {
         let seq = solve::<Htr>(cube.clone(), &fr_slice_set);
         println!("{:?}", seq);
     }
+    */
 }
