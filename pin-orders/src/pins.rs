@@ -171,9 +171,9 @@ impl PinOrder {
             for (i, n) in row.into_iter().enumerate() {
                 if n == 0 { continue; }
                 if n < 0 {
-                    write!(f, "-")?;
-                } else if n > 0 {
                     write!(f, "+")?;
+                } else if n > 0 {
+                    write!(f, "-")?;
                 }
                 if n.abs() == 1 {
                     write!(f, "{}", PIECES[i])?;
@@ -194,6 +194,21 @@ impl PinOrder {
         writeln!(f, "\n")?;
 
         Ok(())
+    }
+
+    pub fn gen_solution(&self, scramble: [i8; 14]) -> [i8; 14] {
+        let inv = self.as_matrix().try_inverse().unwrap().0;
+
+        let mut r = [0; 14];
+
+        for i in 0..14 {
+            for j in 0..14 {
+                r[i] -= inv[i][j] * scramble[j];
+            }
+            r[i] = (r[i] + 5).rem_euclid(12) - 5;
+        }
+
+        r
     }
 }
 
