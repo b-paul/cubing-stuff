@@ -69,7 +69,7 @@ impl PinSet {
 
         PINS.into_iter().combinations(7).filter_map(|c| {
             PinOrder(c.clone())
-                .into_matrix()
+                .as_matrix()
                 .invertible()
                 .then_some(PinSet(c.into_iter().collect()))
         })
@@ -94,7 +94,7 @@ impl std::fmt::Display for PinOrder {
 pub struct PinOrder(pub Vec<PinConfiguration>);
 
 impl PinOrder {
-    pub fn into_matrix(self) -> ClockMatrix {
+    pub fn as_matrix(&self) -> ClockMatrix {
         ClockMatrix::from_pin_order(self)
     }
 }
