@@ -42,7 +42,7 @@ const MATRIX_ROWS: [[i8; 14]; 32] = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 ];
 
-pub struct ClockMatrix([[i8; 14]; 14]);
+pub struct ClockMatrix(pub [[i8; 14]; 14]);
 
 impl ClockMatrix {
     pub fn from_pin_order(pin_order: &PinOrder) -> ClockMatrix {
@@ -65,7 +65,7 @@ impl ClockMatrix {
             vec.extend(s.map(|i| i as f64));
         }
 
-        SMatrix::<f64, 14, 14>::from_column_slice(&vec)
+        SMatrix::<f64, 14, 14>::from_row_slice(&vec)
     }
 
     pub fn invertible(&self) -> bool {

@@ -56,6 +56,48 @@ impl std::fmt::Display for PinConfiguration {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Piece {
+    UL = 0,
+    U = 1,
+    UR = 2,
+    L = 3,
+    C = 4,
+    R = 5,
+    DL = 6,
+    D = 7,
+    DR = 8,
+    BU = 9,
+    BL = 10,
+    BC = 11,
+    BR = 12,
+    BD = 13,
+}
+
+#[rustfmt::skip]
+const PIECES: [Piece; 14] = [Piece::UL, Piece::U, Piece::UR, Piece::L, Piece::C, Piece::R, Piece::DL, Piece::D, Piece::DR, Piece::BU, Piece::BL, Piece::BC, Piece::BR, Piece::BD];
+
+impl std::fmt::Display for Piece {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Piece::UL => write!(f, "UL"),
+            Piece::U => write!(f, "U"),
+            Piece::UR => write!(f, "UR"),
+            Piece::L => write!(f, "L"),
+            Piece::C => write!(f, "C"),
+            Piece::R => write!(f, "R"),
+            Piece::DL => write!(f, "DL"),
+            Piece::D => write!(f, "D"),
+            Piece::DR => write!(f, "DR"),
+            Piece::BU => write!(f, "u"),
+            Piece::BL => write!(f, "l"),
+            Piece::BC => write!(f, "c"),
+            Piece::BR => write!(f, "r"),
+            Piece::BD => write!(f, "d"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct PinSet(pub BTreeSet<PinConfiguration>);
 
@@ -68,11 +110,12 @@ impl PinSet {
 
     /// An iterator over all valid 7 simul pin sets
     pub fn all() -> impl Iterator<Item = Self> {
+
+        use itertools::Itertools;
+
         use PinConfiguration as P;
         #[rustfmt::skip]
         const PINS: [PinConfiguration; 14] = [P::UR, P::DR, P::R, P::DL, P::FSLASH, P::D, P::NUL, P::UL, P::U, P::BSLASH, P::NDL, P::L, P::NDR, P::NUR];
-
-        use itertools::Itertools;
 
         PINS.into_iter().combinations(7).filter_map(|c| {
             PinOrder(c.clone())
@@ -117,6 +160,40 @@ impl PinOrder {
                 )
             })
             .0
+    }
+
+    pub fn make_tutorial(&self, f: &mut impl std::io::Write) -> std::io::Result<()> {
+        let mat = self.as_matrix().try_inverse().unwrap().0;
+
+        writeln!(f, "\nPin order: {self}")?;
+
+        fn formula(f: &mut impl std::io::Write, row: [i8; 14]) -> std::io::Result<()> {
+            for (i, n) in row.into_iter().enumerate() {
+                if n == 0 { continue; }
+                if n < 0 {
+                    write!(f, "-")?;
+                } else if n > 0 {
+                    write!(f, "+")?;
+                }
+                if n.abs() == 1 {
+                    write!(f, "{}", PIECES[i])?;
+                } else if n.abs() > 1 {
+                    write!(f, "{}{}", n.abs(), PIECES[i])?;
+                }
+            }
+            Ok(())
+        }
+
+        for (i, pin) in self.0.iter().enumerate() {
+            write!(f, "{pin}: (")?;
+            formula(f, mat[2 * i])?;
+            write!(f, ", ")?;
+            formula(f, mat[2 * i + 1])?;
+            writeln!(f, ")")?;
+        }
+        writeln!(f, "\n")?;
+
+        Ok(())
     }
 }
 
