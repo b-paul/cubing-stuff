@@ -68,7 +68,7 @@ impl ClockMatrix {
         assert!((det - det.round()).abs() < 0.01);
 
         // determinant is a polynomial, so the projection hom preserves it into Z_12
-        let det = det.round() as u16 % 12;
+        let det = (det.round() as i16).rem_euclid(12);
 
         // the determinant must be a unit in Z_12, i.e. coprime to 12
         det == 1 || det == 5 || det == 7 || det == 11
