@@ -10,18 +10,26 @@ pub enum PinConfiguration {
     R = 2,
     DL = 3,
     // /
+    #[allow(clippy::upper_case_acronyms)]
     FSLASH = 4,
     D = 5,
+    #[allow(clippy::upper_case_acronyms)]
     NUL = 6,
     UL = 7,
     U = 8,
     // \
+    #[allow(clippy::upper_case_acronyms)]
     BSLASH = 9,
+    #[allow(clippy::upper_case_acronyms)]
     NDL = 10,
     L = 11,
+    #[allow(clippy::upper_case_acronyms)]
     NDR = 12,
+    #[allow(clippy::upper_case_acronyms)]
     NUR = 13,
+    //#[allow(clippy::upper_case_acronyms)]
     //ALL = 14,
+    //#[allow(clippy::upper_case_acronyms)]
     //NONE = 15,
 }
 
@@ -52,7 +60,7 @@ impl std::fmt::Display for PinConfiguration {
 pub struct PinSet(pub BTreeSet<PinConfiguration>);
 
 impl PinSet {
-    pub fn as_pin_order(self) -> PinOrder {
+    pub fn into_pin_order(self) -> PinOrder {
         let mut v = self.0.into_iter().collect::<Vec<_>>();
         v.sort();
         PinOrder(v)
@@ -68,7 +76,7 @@ impl PinSet {
 
         PINS.into_iter().combinations(7).filter_map(|c| {
             PinOrder(c.clone())
-                .as_matrix()
+                .into_matrix()
                 .invertible()
                 .then_some(PinSet(c.into_iter().collect()))
         })
@@ -93,7 +101,7 @@ impl std::fmt::Display for PinOrder {
 pub struct PinOrder(pub Vec<PinConfiguration>);
 
 impl PinOrder {
-    pub fn as_matrix(self) -> ClockMatrix {
+    pub fn into_matrix(self) -> ClockMatrix {
         ClockMatrix::from_pin_order(self)
     }
 }
