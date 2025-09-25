@@ -4,7 +4,7 @@ pub mod pins;
 fn main() {
     for pin_set in pins::PinSet::all() {
         use itertools::Itertools;
-        let (count, order) = pin_set
+        let (_, order) = pin_set
             .0
             .into_iter()
             .permutations(7)
@@ -13,6 +13,7 @@ fn main() {
             .sorted_by_key(|(n, _)| -(*n))
             .next()
             .unwrap();
-        println!("{order} {count}");
+        let mut lock = std::io::stdout().lock();
+        order.make_tutorial(&mut lock).unwrap();
     }
 }
