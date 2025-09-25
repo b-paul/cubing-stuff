@@ -43,12 +43,12 @@ const MATRIX_ROWS: [[f64; 14]; 32] = [
 pub struct ClockMatrix(pub SMatrix<f64, 14, 14>);
 
 impl ClockMatrix {
-    pub fn from_pin_order(pin_order: PinOrder) -> ClockMatrix {
+    pub fn from_pin_order(pin_order: &PinOrder) -> ClockMatrix {
         // assume 7 simul everything for now i guess
         assert!(pin_order.0.len() == 7);
         let mut vec = Vec::with_capacity(196);
 
-        for p in pin_order.0 {
+        for &p in &pin_order.0 {
             let mut temp1 = MATRIX_ROWS[2 * p as usize].to_vec();
             let mut temp2 = MATRIX_ROWS[2 * p as usize + 1].to_vec();
 
