@@ -98,3 +98,8 @@ impl PinOrder {
         ClockMatrix::from_pin_order(self)
     }
 }
+
+#[test]
+fn pinset_count() {
+    assert_eq!(PinSet::all().count(), 268);
+}
