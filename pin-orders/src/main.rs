@@ -2,7 +2,7 @@ mod matrix;
 mod pins;
 
 fn main() {
-    for pin_set in pins::PinSet::all() {
-        println!("{}", pin_set.into_pin_order());
+    for order in pins::PinSet::all().map(|s| s.into_pin_order()) {
+        println!("{} {}", order, order.as_matrix().try_inverse().unwrap());
     }
 }
