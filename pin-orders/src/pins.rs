@@ -26,6 +26,13 @@ pub enum PinConfiguration {
     //NONE = 15,
 }
 
+impl PinConfiguration {
+    pub fn to_bitmask(self) -> u8 {
+        // UR 0th DR 1st DL 2nd UL 3rd
+        (self as u8 + 1) & 15
+    }
+}
+
 impl std::fmt::Display for PinConfiguration {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -96,6 +103,20 @@ pub struct PinOrder(pub Vec<PinConfiguration>);
 impl PinOrder {
     pub fn as_matrix(&self) -> ClockMatrix {
         ClockMatrix::from_pin_order(self)
+    }
+
+    pub fn count_transitions(&self) -> u32 {
+        let cur = self.0[0];
+        self.0
+            .iter()
+            .skip(1)
+            .fold((0, cur.to_bitmask()), |(count, cur), next| {
+                (
+                    count + (cur ^ next.to_bitmask()).count_ones(),
+                    next.to_bitmask(),
+                )
+            })
+            .0
     }
 }
 
