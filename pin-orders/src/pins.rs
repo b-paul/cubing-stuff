@@ -4,32 +4,25 @@ use std::collections::BTreeSet;
 
 /// All of the ways you can have the pins configured on a clock, assuming a fixed rotation and side
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum PinConfiguration {
     UR = 0,
     DR = 1,
     R = 2,
     DL = 3,
     // /
-    #[allow(clippy::upper_case_acronyms)]
     FSLASH = 4,
     D = 5,
-    #[allow(clippy::upper_case_acronyms)]
     NUL = 6,
     UL = 7,
     U = 8,
     // \
-    #[allow(clippy::upper_case_acronyms)]
     BSLASH = 9,
-    #[allow(clippy::upper_case_acronyms)]
     NDL = 10,
     L = 11,
-    #[allow(clippy::upper_case_acronyms)]
     NDR = 12,
-    #[allow(clippy::upper_case_acronyms)]
     NUR = 13,
-    //#[allow(clippy::upper_case_acronyms)]
     //ALL = 14,
-    //#[allow(clippy::upper_case_acronyms)]
     //NONE = 15,
 }
 
