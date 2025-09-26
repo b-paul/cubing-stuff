@@ -3,24 +3,43 @@ pub mod pins;
 pub mod z12;
 
 fn main() {
-    for pin_set in pins::PinSet::all() {
-        use itertools::Itertools;
-        let (_, order) = pin_set
+    use itertools::Itertools;
+    use rayon::prelude::*;
+    let sols = pins::PinSet::all().map(|pin_set| {
+        let mut all = Vec::new();
+        pin_set
             .0
             .into_iter()
             .permutations(7)
+            .collect_vec()
+            .into_par_iter()
             .map(pins::PinOrder)
-            .map(|o| (o.count_transitions() as i32, o))
-            .sorted_by_key(|(n, _)| -(*n))
+            .map(|o| (o.gen_memo(), o.count_transitions() as i32, o))
+            .collect_into_vec(&mut all);
+        let (memo, _, order) = all
+            .into_iter()
+            .sorted_by_key(|(memo, n, _)| {
+                (
+                    *n,
+                    -(memo
+                        .iter()
+                        .filter(|m| !matches!(m, pins::MoveSolution::Memo(_)))
+                        .count() as isize),
+                    memo.iter()
+                        .map(|m| match m {
+                            pins::MoveSolution::Memo(m) => m.iter().filter(|&&n| n != 0).count(),
+                            _ => 0,
+                        })
+                        .sum::<usize>(),
+                )
+            })
             .next()
             .unwrap();
+        (memo, order)
+    });
+
+    for (memo, order) in sols {
         let mut lock = std::io::stdout().lock();
-        order.make_tutorial(&mut lock, order.gen_memo()).unwrap();
+        order.make_tutorial(&mut lock, memo).unwrap();
     }
-    /*
-    use pins::PinConfiguration as P;
-    let order = pins::PinOrder(vec![P::NDL, P::R, P::DR, P::NUR, P::L, P::UL, P::BSLASH]);
-    let mut lock = std::io::stdout().lock();
-    order.make_tutorial(&mut lock, order.gen_memo()).unwrap();
-    */
 }
