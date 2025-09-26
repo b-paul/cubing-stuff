@@ -1,5 +1,6 @@
 pub mod matrix;
 pub mod pins;
+pub mod z12;
 
 fn main() {
     for pin_set in pins::PinSet::all() {
