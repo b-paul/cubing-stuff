@@ -14,7 +14,7 @@ fn main() {
                 .permutations(7)
                 .map(pins::PinOrder)
                 .flat_map(|po| (0..7).map(move |i| pins::FlipPinOrder(po.clone(), i)))
-                //.filter(|fpo| fpo.no_d_moves())
+                .filter(|fpo| fpo.count_d_moves() < 1)
                 .collect_vec()
                 .into_par_iter()
                 .map(|o| (o.gen_memo(), o.0.count_transitions() as i32, o))
