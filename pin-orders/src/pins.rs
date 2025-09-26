@@ -1,4 +1,5 @@
-use crate::matrix::ClockMatrix;
+use crate::matrix::{ClockMatrix, CompletedMatrix};
+use crate::z12::Z12;
 
 use std::collections::BTreeSet;
 
@@ -110,7 +111,6 @@ impl PinSet {
 
     /// An iterator over all valid 7 simul pin sets
     pub fn all() -> impl Iterator<Item = Self> {
-
         use itertools::Itertools;
 
         use PinConfiguration as P;
@@ -169,7 +169,9 @@ impl PinOrder {
 
         fn formula(f: &mut impl std::io::Write, row: [i8; 14]) -> std::io::Result<()> {
             for (i, n) in row.into_iter().enumerate() {
-                if n == 0 { continue; }
+                if n == 0 {
+                    continue;
+                }
                 if n < 0 {
                     write!(f, "+")?;
                 } else if n > 0 {
@@ -215,4 +217,47 @@ impl PinOrder {
 #[test]
 fn pinset_count() {
     assert_eq!(PinSet::all().count(), 268);
+}
+
+// Generating reduced memo:
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum MoveSolution {
+    /// A move that has to be calculated from a formula specified by this row vector.
+    Memo([i8; 14]),
+    /// An intuitive move, done by making `from` line up with `to`.
+    Intuitive { from: Piece, to: Piece },
+}
+
+impl PinOrder {
+    pub fn gen_memo(&self) -> [MoveSolution; 14] {
+        let mut arr = [MoveSolution::Memo([0; 14]); 14];
+
+        let mut completed_matrix = CompletedMatrix(Vec::new());
+
+        let mat = self
+            .as_matrix()
+            .try_inverse()
+            .expect("Tried to generate memo for an invalid pin order");
+
+        println!("{self}");
+        for i in 0..6 {
+            arr[2 * i] = MoveSolution::Memo(mat.0[2 * i]);
+            arr[2 * i + 1] = MoveSolution::Memo(mat.0[2 * i + 1]);
+
+            completed_matrix.0.push(mat.0[2 * i].map(Z12::new));
+            completed_matrix.0.push(mat.0[2 * i + 1].map(Z12::new));
+
+            println!("{i}:");
+            println!(
+                "{:?}",
+                completed_matrix.find_intuitive(mat.0[2 * i].map(Z12::new))
+            );
+            println!(
+                "{:?}",
+                completed_matrix.find_intuitive(mat.0[2 * i + 1].map(Z12::new))
+            );
+        }
+
+        arr
+    }
 }
