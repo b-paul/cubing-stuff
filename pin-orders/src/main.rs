@@ -3,7 +3,6 @@ pub mod pins;
 pub mod z12;
 
 fn main() {
-    /*
     for pin_set in pins::PinSet::all() {
         use itertools::Itertools;
         let (_, order) = pin_set
@@ -16,15 +15,12 @@ fn main() {
             .next()
             .unwrap();
         let mut lock = std::io::stdout().lock();
-        order.make_tutorial(&mut lock).unwrap();
-
-        order.gen_memo();
+        order.make_tutorial(&mut lock, order.gen_memo()).unwrap();
     }
-    */
+    /*
     use pins::PinConfiguration as P;
     let order = pins::PinOrder(vec![P::NDL, P::R, P::DR, P::NUR, P::L, P::UL, P::BSLASH]);
     let mut lock = std::io::stdout().lock();
-    order.make_tutorial(&mut lock).unwrap();
-
-    order.gen_memo();
+    order.make_tutorial(&mut lock, order.gen_memo()).unwrap();
+    */
 }

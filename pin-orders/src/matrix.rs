@@ -122,6 +122,10 @@ impl CompletedMatrix {
     }
 
     pub fn to_echelon(mut self) -> CompletedMatrix {
+        if self.0.len() == 0 {
+            return self;
+        }
+
         let mut r = 0;
 
         for k in 0..14 {
@@ -159,7 +163,7 @@ impl CompletedMatrix {
             while self.0[r][pivot] == Z12::new(0) {
                 pivot += 1;
             }
-            let mut val = -row[pivot];
+            let mut val = row[pivot];
             for (j, &v) in x.iter().enumerate() {
                 val -= v * self.0[j][pivot];
             }
@@ -173,10 +177,7 @@ impl CompletedMatrix {
         }
 
         for (i, r) in row.into_iter().enumerate() {
-            if
-                (0..self.0.len()).map(|j| x[j] * self.0[j][i]).sum::<Z12>() !=
-                r
-            {
+            if (0..self.0.len()).map(|j| x[j] * self.0[j][i]).sum::<Z12>() != r {
                 return false;
             }
         }
