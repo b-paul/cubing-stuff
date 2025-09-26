@@ -450,18 +450,19 @@ impl FlipPinOrder {
         Ok(())
     }
 
-    pub fn no_d_moves(&self) -> bool {
+    pub fn count_d_moves(&self) -> usize {
         let mut flip = false;
+        let mut n = 0;
         for i in 0..7 {
             if i == self.1 {
                 flip = true;
             }
             let c = self.0.0[i];
             if flip && c.flip().has_d_move() || !flip && c.has_d_move() {
-                return false;
+                n += 1;
             }
         }
-        true
+        n
     }
 }
 // BEST CODE !!!!
