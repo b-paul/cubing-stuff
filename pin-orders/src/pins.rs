@@ -162,35 +162,43 @@ impl PinOrder {
             .0
     }
 
-    pub fn make_tutorial(&self, f: &mut impl std::io::Write) -> std::io::Result<()> {
-        let mat = self.as_matrix().try_inverse().unwrap().0;
-
+    pub fn make_tutorial(
+        &self,
+        f: &mut impl std::io::Write,
+        memo: [MoveSolution; 14],
+    ) -> std::io::Result<()> {
         writeln!(f, "\nPin order: {self}")?;
 
-        fn formula(f: &mut impl std::io::Write, row: [i8; 14]) -> std::io::Result<()> {
-            for (i, n) in row.into_iter().enumerate() {
-                if n == 0 {
-                    continue;
+        fn formula(f: &mut impl std::io::Write, memo: MoveSolution) -> std::io::Result<()> {
+            match memo {
+                MoveSolution::Memo(row) => {
+                    for (i, n) in row.into_iter().enumerate() {
+                        if n == 0 {
+                            continue;
+                        }
+                        if n < 0 {
+                            write!(f, "+")?;
+                        } else if n > 0 {
+                            write!(f, "-")?;
+                        }
+                        if n.abs() == 1 {
+                            write!(f, "{}", PIECES[i])?;
+                        } else if n.abs() > 1 {
+                            write!(f, "{}{}", n.abs(), PIECES[i])?;
+                        }
+                    }
                 }
-                if n < 0 {
-                    write!(f, "+")?;
-                } else if n > 0 {
-                    write!(f, "-")?;
-                }
-                if n.abs() == 1 {
-                    write!(f, "{}", PIECES[i])?;
-                } else if n.abs() > 1 {
-                    write!(f, "{}{}", n.abs(), PIECES[i])?;
-                }
+                MoveSolution::Intuitive { from, to } => write!(f, "{from} to {to}")?,
+                MoveSolution::Obvious => write!(f, "finish")?,
             }
             Ok(())
         }
 
         for (i, pin) in self.0.iter().enumerate() {
             write!(f, "{pin}: (")?;
-            formula(f, mat[2 * i])?;
+            formula(f, memo[2 * i])?;
             write!(f, ", ")?;
-            formula(f, mat[2 * i + 1])?;
+            formula(f, memo[2 * i + 1])?;
             writeln!(f, ")")?;
         }
         writeln!(f, "\n")?;
@@ -225,12 +233,17 @@ pub enum MoveSolution {
     /// A move that has to be calculated from a formula specified by this row vector.
     Memo([i8; 14]),
     /// An intuitive move, done by making `from` line up with `to`.
-    Intuitive { from: Piece, to: Piece },
+    Intuitive {
+        from: Piece,
+        to: Piece,
+    },
+    // The last move lol
+    Obvious,
 }
 
 impl PinOrder {
     pub fn gen_memo(&self) -> [MoveSolution; 14] {
-        let mut arr = [MoveSolution::Memo([0; 14]); 14];
+        let mut arr = [MoveSolution::Obvious; 14];
 
         let mut completed_matrix = CompletedMatrix(Vec::new());
 
@@ -241,21 +254,21 @@ impl PinOrder {
 
         println!("{self}");
         for i in 0..6 {
-            arr[2 * i] = MoveSolution::Memo(mat.0[2 * i]);
-            arr[2 * i + 1] = MoveSolution::Memo(mat.0[2 * i + 1]);
+            for (j, memo) in arr[2 * i..=2 * i + 1].iter_mut().enumerate() {
+                *memo = if let Some((from, to)) =
+                    completed_matrix.find_intuitive(mat.0[2*i + j].map(Z12::new))
+                {
+                    MoveSolution::Intuitive {
+                        from: PIECES[from],
+                        to: PIECES[to],
+                    }
+                } else {
+                    MoveSolution::Memo(mat.0[2*i + j])
+                };
+            }
 
             completed_matrix.0.push(mat.0[2 * i].map(Z12::new));
             completed_matrix.0.push(mat.0[2 * i + 1].map(Z12::new));
-
-            println!("{i}:");
-            println!(
-                "{:?}",
-                completed_matrix.find_intuitive(mat.0[2 * i].map(Z12::new))
-            );
-            println!(
-                "{:?}",
-                completed_matrix.find_intuitive(mat.0[2 * i + 1].map(Z12::new))
-            );
         }
 
         arr
