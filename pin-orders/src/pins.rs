@@ -202,8 +202,8 @@ impl PinOrder {
         let mut r = [0; 14];
 
         for i in 0..14 {
-            for j in 0..14 {
-                r[i] -= inv[i][j] * scramble[j];
+            for (j, &s) in scramble.iter().enumerate() {
+                r[i] -= inv[i][j] * s;
             }
             r[i] = (r[i] + 5).rem_euclid(12) - 5;
         }
