@@ -149,11 +149,18 @@ impl CompletedMatrix {
     }
 
     // This assumes self is in echelon form so you better make sure it is !!!
-    pub fn check_intuitive(&self, mut row: [Z12; 14], from: usize, to: usize) -> bool {
+    pub fn check_intuitive(&self, mut row: [Z12; 14], from: usize, to: usize, flip: bool) -> bool {
         // The row is meant to be negated but we can just negate the from and to terms we add
         // instead except idk
-        row[from] -= Z12(1);
-        row[to] += Z12(1);
+        if flip {
+            use crate::pins::PIECES;
+            let (fp, tp) = (PIECES[from], PIECES[to]);
+            row[fp.flip().idx()] -= if fp.is_corner() { Z12(-1) } else { Z12(1) };
+            row[tp.flip().idx()] += if tp.is_corner() { Z12(-1) } else { Z12(1) };
+        } else {
+            row[from] -= Z12(1);
+            row[to] += Z12(1);
+        }
 
         let mut x = Vec::new();
         let mut pivot = 0;
@@ -185,14 +192,14 @@ impl CompletedMatrix {
         true
     }
 
-    pub fn find_intuitive(&self, row: [Z12; 14]) -> Option<(usize, usize)> {
+    pub fn find_intuitive(&self, row: [Z12; 14], flip: bool) -> Option<(usize, usize)> {
         let echelon = self.clone().to_echelon();
         for from in 0..9 {
             for to in 0..9 {
                 if to == from {
                     continue;
                 }
-                if echelon.check_intuitive(row, from, to) {
+                if echelon.check_intuitive(row, from, to, flip) {
                     return Some((from, to));
                 }
             }
