@@ -252,7 +252,6 @@ impl PinOrder {
             .try_inverse()
             .expect("Tried to generate memo for an invalid pin order");
 
-        println!("{self}");
         for i in 0..6 {
             for (j, memo) in arr[2 * i..=2 * i + 1].iter_mut().enumerate() {
                 *memo = if let Some((from, to)) =
