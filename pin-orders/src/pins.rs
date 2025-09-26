@@ -32,6 +32,30 @@ impl PinConfiguration {
         // UR 0th DR 1st DL 2nd UL 3rd
         (self as u8 + 1) & 15
     }
+
+    pub fn flip(self) -> PinConfiguration {
+        match self {
+            PinConfiguration::UR => PinConfiguration::NDR,
+            PinConfiguration::DR => PinConfiguration::NUR,
+            PinConfiguration::R => PinConfiguration::L,
+            PinConfiguration::DL => PinConfiguration::NUL,
+            PinConfiguration::FSLASH => PinConfiguration::FSLASH,
+            PinConfiguration::D => PinConfiguration::D,
+            PinConfiguration::NUL => PinConfiguration::DL,
+            PinConfiguration::UL => PinConfiguration::NDL,
+            PinConfiguration::U => PinConfiguration::U,
+            PinConfiguration::BSLASH => PinConfiguration::BSLASH,
+            PinConfiguration::NDL => PinConfiguration::UL,
+            PinConfiguration::L => PinConfiguration::R,
+            PinConfiguration::NDR => PinConfiguration::UR,
+            PinConfiguration::NUR => PinConfiguration::DR,
+        }
+    }
+
+    pub fn has_d_move(self) -> bool {
+        use PinConfiguration as P;
+        matches!(self, P::DR | P::DL | P::D | P::U | P::NDL | P::NDR)
+    }
 }
 
 impl std::fmt::Display for PinConfiguration {
@@ -75,8 +99,37 @@ pub enum Piece {
     BD = 13,
 }
 
+impl Piece {
+    pub fn flip(self) -> Piece {
+        match self {
+            Piece::UL => Piece::DL,
+            Piece::U => Piece::BD,
+            Piece::UR => Piece::DR,
+            Piece::L => Piece::BL,
+            Piece::C => Piece::BC,
+            Piece::R => Piece::BR,
+            Piece::DL => Piece::UL,
+            Piece::D => Piece::BD,
+            Piece::DR => Piece::UR,
+            Piece::BU => Piece::D,
+            Piece::BL => Piece::L,
+            Piece::BC => Piece::C,
+            Piece::BR => Piece::R,
+            Piece::BD => Piece::U,
+        }
+    }
+
+    pub fn idx(self) -> usize {
+        self as usize
+    }
+
+    pub fn is_corner(self) -> bool {
+        matches!(self, Piece::UL | Piece::UR | Piece::DL | Piece::DR)
+    }
+}
+
 #[rustfmt::skip]
-const PIECES: [Piece; 14] = [Piece::UL, Piece::U, Piece::UR, Piece::L, Piece::C, Piece::R, Piece::DL, Piece::D, Piece::DR, Piece::BU, Piece::BL, Piece::BC, Piece::BR, Piece::BD];
+pub const PIECES: [Piece; 14] = [Piece::UL, Piece::U, Piece::UR, Piece::L, Piece::C, Piece::R, Piece::DL, Piece::D, Piece::DR, Piece::BU, Piece::BL, Piece::BC, Piece::BR, Piece::BD];
 
 impl std::fmt::Display for Piece {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -255,14 +308,14 @@ impl PinOrder {
         for i in 0..6 {
             for (j, memo) in arr[2 * i..=2 * i + 1].iter_mut().enumerate() {
                 *memo = if let Some((from, to)) =
-                    completed_matrix.find_intuitive(mat.0[2*i + j].map(Z12::new))
+                    completed_matrix.find_intuitive(mat.0[2 * i + j].map(Z12::new), false)
                 {
                     MoveSolution::Intuitive {
                         from: PIECES[from],
                         to: PIECES[to],
                     }
                 } else {
-                    MoveSolution::Memo(mat.0[2*i + j])
+                    MoveSolution::Memo(mat.0[2 * i + j])
                 };
             }
 
@@ -271,5 +324,161 @@ impl PinOrder {
         }
 
         arr
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct FlipPinOrder(pub PinOrder, pub usize);
+
+fn flip_memo(row: [i8; 14]) -> [i8; 14] {
+    let mut ans = [0; 14];
+    for i in 0..14 {
+        ans[i] = row[PIECES[i].flip().idx()];
+        if PIECES[i].is_corner() {
+            ans[i] = (-ans[i] + 5).rem_euclid(12) - 5;
+        }
+    }
+    ans
+}
+
+impl FlipPinOrder {
+    pub fn gen_memo(&self) -> [MoveSolution; 14] {
+        let mut arr = [MoveSolution::Obvious; 14];
+
+        let mut completed_matrix = CompletedMatrix(Vec::new());
+
+        let mat = self
+            .0
+            .as_matrix()
+            .try_inverse()
+            .expect("Tried to generate memo for an invalid pin order");
+
+        let mut flip = false;
+
+        for i in 0..6 {
+            if i == self.1 {
+                flip = true;
+            }
+            for (mut j, memo) in arr[2 * i..=2 * i + 1].iter_mut().enumerate() {
+                if flip {
+                    j = 1 - j
+                };
+                *memo = if let Some((from, to)) =
+                    completed_matrix.find_intuitive(mat.0[2 * i + j].map(Z12::new), flip)
+                {
+                    if flip {
+                        MoveSolution::Intuitive {
+                            from: PIECES[to],
+                            to: PIECES[from],
+                        }
+                    } else {
+                        MoveSolution::Intuitive {
+                            from: PIECES[from],
+                            to: PIECES[to],
+                        }
+                    }
+                } else {
+                    MoveSolution::Memo(if flip {
+                        flip_memo(mat.0[2 * i + j])
+                    } else {
+                        mat.0[2 * i + j]
+                    })
+                };
+            }
+
+            completed_matrix.0.push(mat.0[2 * i].map(Z12::new));
+            completed_matrix.0.push(mat.0[2 * i + 1].map(Z12::new));
+        }
+
+        arr
+    }
+
+    // BEST CODE EVER !!!!!!!
+
+    pub fn make_tutorial(
+        &self,
+        f: &mut impl std::io::Write,
+        memo: [MoveSolution; 14],
+    ) -> std::io::Result<()> {
+        writeln!(f, "\nPin order: {self}")?;
+
+        fn formula(f: &mut impl std::io::Write, memo: MoveSolution) -> std::io::Result<()> {
+            match memo {
+                MoveSolution::Memo(row) => {
+                    for (i, n) in row.into_iter().enumerate() {
+                        if n == 0 {
+                            continue;
+                        }
+                        if n < 0 {
+                            write!(f, "+")?;
+                        } else if n > 0 {
+                            write!(f, "-")?;
+                        }
+                        if n.abs() == 1 {
+                            write!(f, "{}", PIECES[i])?;
+                        } else if n.abs() > 1 {
+                            write!(f, "{}{}", n.abs(), PIECES[i])?;
+                        }
+                    }
+                }
+                MoveSolution::Intuitive { from, to } => write!(f, "{from} to {to}")?,
+                MoveSolution::Obvious => write!(f, "finish")?,
+            }
+            Ok(())
+        }
+
+        let mut flip = false;
+
+        for (i, pin) in self.0.0.iter().enumerate() {
+            if i == self.1 {
+                writeln!(f, "x2")?;
+                flip = true;
+            }
+
+            if flip {
+                write!(f, "{}: (", pin.flip())?;
+            } else {
+                write!(f, "{pin}: (")?;
+            }
+            formula(f, memo[2 * i])?;
+            write!(f, ", ")?;
+            formula(f, memo[2 * i + 1])?;
+            writeln!(f, ")")?;
+        }
+        writeln!(f, "\n")?;
+
+        Ok(())
+    }
+
+    pub fn no_d_moves(&self) -> bool {
+        let mut flip = false;
+        for i in 0..7 {
+            if i == self.1 {
+                flip = true;
+            }
+            let c = self.0.0[i];
+            if flip && c.flip().has_d_move() || !flip && c.has_d_move() {
+                return false;
+            }
+        }
+        true
+    }
+}
+// BEST CODE !!!!
+impl std::fmt::Display for FlipPinOrder {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut flip = false;
+        for (i, m) in self.0.0.iter().enumerate() {
+            if self.1 == i {
+                write!(f, "x2 ")?;
+                flip = true;
+            }
+            if flip {
+                write!(f, "{} ", m.flip())?;
+            } else {
+                write!(f, "{m} ")?;
+            }
+        }
+        Ok(())
     }
 }
