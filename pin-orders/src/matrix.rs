@@ -183,10 +183,6 @@ impl CompletedMatrix {
             x.push(x2);
         }
 
-        if self.0.len() == 8 && from == 1 && to == 2{
-            println!("{row:?} {x:?}");
-        }
-
         row.into_iter()
             .enumerate()
             .all(|(i, r)| (0..self.0.len()).map(|j| x[j] * self.0[j][i]).sum::<Z12>() == r)
