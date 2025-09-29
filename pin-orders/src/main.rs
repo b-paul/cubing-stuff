@@ -13,8 +13,8 @@ fn main() {
                 .into_iter()
                 .permutations(7)
                 .map(pins::PinOrder)
-                .flat_map(|po| (0..7).map(move |i| pins::FlipPinOrder(po.clone(), i)))
-                .filter(|fpo| fpo.count_d_moves() < 1)
+                .flat_map(|po| (1..7).map(move |i| pins::FlipPinOrder(po.clone(), i)))
+                //.filter(|fpo| fpo.count_d_moves() == 1)
                 .collect_vec()
                 .into_par_iter()
                 .map(|o| (o.gen_memo(), o.0.count_transitions() as i32, o))
@@ -37,7 +37,8 @@ fn main() {
             )
         });
 
-    for (memo, _, order) in sols {
+    for (memo, count, order) in sols {
+        println!("{count}");
         let mut lock = std::io::stdout().lock();
         order.make_tutorial(&mut lock, memo).unwrap();
     }

@@ -464,7 +464,27 @@ impl FlipPinOrder {
         }
         n
     }
+
+    pub fn count_transitions(&self) -> u32 {
+        let cur = self.0.0[0];
+        self.0.0
+            .iter()
+            .enumerate()
+            .skip(1)
+            .fold((0, cur.to_bitmask()), |(count, cur), (i, next)| {
+                (
+                    count + (cur ^ next.to_bitmask()).count_ones(),
+                    if i == self.1 {
+                        next.flip().to_bitmask()
+                    } else {
+                        next.to_bitmask()
+                    },
+                )
+            })
+            .0
+    }
 }
+
 // BEST CODE !!!!
 impl std::fmt::Display for FlipPinOrder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
