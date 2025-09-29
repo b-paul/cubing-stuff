@@ -17,7 +17,7 @@ fn main() {
                 //.filter(|fpo| fpo.count_d_moves() == 1)
                 .collect_vec()
                 .into_par_iter()
-                .map(|o| (o.gen_memo(), o.0.count_transitions() as i32, o))
+                .map(|o| (o.gen_memo(), o.count_transitions() as i32, o))
                 .collect_into_vec(&mut all);
             all.into_iter()
         })

@@ -103,7 +103,7 @@ impl Piece {
     pub fn flip(self) -> Piece {
         match self {
             Piece::UL => Piece::DL,
-            Piece::U => Piece::BD,
+            Piece::U => Piece::BU,
             Piece::UR => Piece::DR,
             Piece::L => Piece::BL,
             Piece::C => Piece::BC,
@@ -330,6 +330,7 @@ impl PinOrder {
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FlipPinOrder(pub PinOrder, pub usize);
 
+/*
 fn flip_memo(row: [i8; 14]) -> [i8; 14] {
     let mut ans = [0; 14];
     for i in 0..14 {
@@ -340,6 +341,7 @@ fn flip_memo(row: [i8; 14]) -> [i8; 14] {
     }
     ans
 }
+*/
 
 impl FlipPinOrder {
     pub fn gen_memo(&self) -> [MoveSolution; 14] {
@@ -378,8 +380,15 @@ impl FlipPinOrder {
                         }
                     }
                 } else {
+                    /*
                     MoveSolution::Memo(if flip {
                         flip_memo(mat.0[2 * i + j])
+                    } else {
+                        mat.0[2 * i + j]
+                    })
+                    */
+                    MoveSolution::Memo(if flip {
+                        mat.0[2 * i + j].map(|n| -n)
                     } else {
                         mat.0[2 * i + j]
                     })
