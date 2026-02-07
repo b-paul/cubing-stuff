@@ -1,0 +1,8 @@
+[package]
+name = "drxs"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.57", features = ["derive"] }
+cube-lib = { git = "https://github.com/b-paul/cube-lib", rev = "aafa1dd07bf8abbcde6360a47c131ffd54703a25" }
