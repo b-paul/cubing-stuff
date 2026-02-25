@@ -5,4 +5,4 @@ edition = "2024"
 
 [dependencies]
 clap = { version = "4.5.57", features = ["derive"] }
-cube-lib = { git = "https://github.com/b-paul/cube-lib", rev = "aafa1dd07bf8abbcde6360a47c131ffd54703a25" }
+cube-lib = { git = "https://github.com/b-paul/cube-lib", rev = "d64a35a2a8e9ccdd773f6223d5540728c628e58b" }

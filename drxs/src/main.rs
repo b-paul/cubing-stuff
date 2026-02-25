@@ -1,4 +1,8 @@
 use clap::Parser;
+use cube_lib::{
+    cube333::{CubieCube, moves::Move333},
+    moves::NissSequence,
+};
 
 // TODO allow specifying the axes and slice count and flipped edge count ? of output drs maybe. An
 // interface would need to be made
@@ -8,7 +12,7 @@ use clap::Parser;
 #[command(version, about)]
 struct Args {
     /// The scramble you wish to solve written in HTM. Niss brackets are allowed :)
-    scramble: String,
+    scramble: NissSequence<Move333>,
 
     /// Print solutions with final qts reversed
     #[arg(short)]
@@ -48,7 +52,15 @@ struct Args {
 }
 
 fn main() {
-    let _args = Args::parse();
+    let args = Args::parse();
 
-    println!("Sorry I haven't actually made the solver yet...");
+    let cube = CubieCube::SOLVED.make_niss_moves(args.scramble);
+
+    let mut solver = drxs::LinearSolver::new(cube);
+
+    args.max.inspect(|&d| solver.set_max_depth(d));
+
+    for sol in solver {
+        println!("{sol:?}");
+    }
 }
