@@ -3,13 +3,14 @@ use cube_lib::{
         CubieCube,
         axis::Axis,
         corner::CornerTwist,
+        edge::EdgeFlip,
         moves::{Move333, Move333Type},
     },
     moves::{Move, MoveSequence},
     mv,
 };
 
-fn next_ty(t: Move333Type) -> Option<Move333Type> {
+pub fn next_ty(t: Move333Type) -> Option<Move333Type> {
     match t {
         Move333Type::R => Some(Move333Type::L),
         Move333Type::L => Some(Move333Type::U),
@@ -27,9 +28,31 @@ fn is_solved(c: &CubieCube) -> bool {
     const COS: [[CornerTwist; 8]; 3] = [[CT::Oriented; 8],
     [CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise],
     [CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise]];
+    const IDXS: [[usize; 4]; 3] = [[8, 9, 10, 11], [0, 2, 4, 6], [1, 3, 5, 7]];
 
-    // this is just UD co atm lol
-    Axis::AXES.iter().any(|&a| COS.contains(&c.axis_co(a)))
+    fn idx_i(a: Axis, j: usize) -> usize {
+        match a {
+            Axis::FB => (j + 2) % 3,
+            Axis::LR => (j + 1) % 3,
+            Axis::UD => j,
+        }
+    }
+
+    Axis::AXES.iter().any(|&a| {
+        let co = c.axis_co(a);
+        let eo = c.axis_eo(a);
+        (0..3).any(|j| {
+            let idxs = IDXS[idx_i(a, j)];
+            COS[j] == co
+                && idxs.into_iter().all(|k| match a {
+                    Axis::FB => c.ep[k].s_slice(),
+                    Axis::LR => c.ep[k].m_slice(),
+                    Axis::UD => c.ep[k].e_slice(),
+                })
+                && (idxs.into_iter().all(|k| eo[k] == EdgeFlip::Oriented)
+                    || idxs.into_iter().all(|k| eo[k] == EdgeFlip::Flipped))
+        })
+    })
 }
 
 /// Finds linear dr-xs solutions (on the normal side of a scramble) with an iterator interface.
@@ -156,6 +179,10 @@ impl Iterator for LinearSolver {
             while {
                 if is_solved(&self.cube) {
                     let mvs = self.moves.clone();
+                    // skip over the variations of R R' L L' moves
+                    for _ in 0..5 {
+                        self.next_state();
+                    }
                     if !self.next_state() {
                         self.increase_depth();
                     }
