@@ -1,16 +1,36 @@
 use cube_lib::{
-    cube333::{CubieCube, axis::Axis, corner::CornerTwist, moves::Move333},
-    moves::MoveSequence,
+    cube333::{
+        CubieCube,
+        axis::Axis,
+        corner::CornerTwist,
+        moves::{Move333, Move333Type},
+    },
+    moves::{Move, MoveSequence},
+    mv,
 };
+
+fn next_ty(t: Move333Type) -> Option<Move333Type> {
+    match t {
+        Move333Type::R => Some(Move333Type::L),
+        Move333Type::L => Some(Move333Type::U),
+        Move333Type::U => Some(Move333Type::D),
+        Move333Type::D => Some(Move333Type::F),
+        Move333Type::F => Some(Move333Type::B),
+        Move333Type::B => None,
+    }
+}
 
 /// Determines whether a CubieCube is in dr-xs for some axis.
 fn is_solved(c: &CubieCube) -> bool {
     use CornerTwist as CT;
     #[rustfmt::skip]
-    const COS: [[CornerTwist; 8]; 3] = [[CT::Oriented; 8], [CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise], [CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise]];
+    const COS: [[CornerTwist; 8]; 3] = [[CT::Oriented; 8],
+    [CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise],
+    [CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise]];
 
-    // this is just co atm lol
-    Axis::AXES.iter().any(|&a| COS.contains(&c.axis_co(a)))
+    // this is just UD co atm lol
+    //Axis::AXES.iter().any(|&a| COS.contains(&c.axis_co(a)))
+    COS.contains(&c.axis_co(Axis::UD))
 }
 
 /// Finds linear dr-xs solutions (on the normal side of a scramble) with an iterator interface.
@@ -46,15 +66,94 @@ impl LinearSolver {
         self.max_depth = d;
     }
 
+    fn add_move(&mut self, mv: Move333) {
+        self.moves.push(mv);
+        self.cube = self.cube.clone().make_move(mv);
+    }
+
+    fn pop_move(&mut self) -> Option<Move333> {
+        let m = self.moves.pop()?;
+        self.cube = self.cube.clone().make_move(m.inverse());
+        Some(m)
+    }
+
+    fn choose_new_move(&mut self) {
+        assert!(self.depth > self.moves.len());
+        use Move333Type as T;
+
+        match self.moves.last().copied() {
+            // Don't dupe R moves
+            Some(m) if m.ty == T::R => self.add_move(mv!(L, 1)),
+            // We never check L R because we'll do R L instead
+            // hence we skip straight to L F
+            Some(m) if m.ty == T::L => self.add_move(mv!(F, 1)),
+            _ => self.add_move(mv!(R, 1)),
+        }
+    }
+
     /// Increase the current search depth and reset the search space.
     fn increase_depth(&mut self) {
-        todo!()
+        assert!(self.moves.is_empty());
+
+        self.depth += 1;
+
+        for _ in 0..self.depth {
+            self.choose_new_move();
+        }
     }
 
     /// Attempts to get the next move in the search space. If we have exhausted the search space,
     /// false is returned.
     fn next_state(&mut self) -> bool {
-        todo!()
+        let Some(last_end) = self.pop_move() else {
+            return false;
+        };
+
+        if last_end.count < 3 {
+            assert!(last_end.count >= 1);
+            let m = Move333 {
+                count: last_end.count + 1,
+                ..last_end
+            };
+            self.add_move(m);
+            true
+        } else {
+            assert!(last_end.count == 3);
+
+            match (
+                next_ty(last_end.ty),
+                self.moves.last().cloned().map(|m| m.ty),
+            ) {
+                (Some(ty), Some(ty2)) if ty == ty2 => match next_ty(ty) {
+                    Some(ty) => {
+                        let m = Move333 { ty, count: 1 };
+                        self.add_move(m);
+                        true
+                    }
+                    None => {
+                        if self.next_state() {
+                            self.choose_new_move();
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                },
+                (Some(ty), _) => {
+                    let m = Move333 { ty, count: 1 };
+                    self.add_move(m);
+                    true
+                }
+                (None, _) => {
+                    if self.next_state() {
+                        self.choose_new_move();
+                        true
+                    } else {
+                        false
+                    }
+                }
+            }
+        }
     }
 }
 
