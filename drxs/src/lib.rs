@@ -29,8 +29,7 @@ fn is_solved(c: &CubieCube) -> bool {
     [CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise]];
 
     // this is just UD co atm lol
-    //Axis::AXES.iter().any(|&a| COS.contains(&c.axis_co(a)))
-    COS.contains(&c.axis_co(Axis::FB))
+    Axis::AXES.iter().any(|&a| COS.contains(&c.axis_co(a)))
 }
 
 /// Finds linear dr-xs solutions (on the normal side of a scramble) with an iterator interface.
@@ -120,31 +119,22 @@ impl LinearSolver {
         } else {
             assert!(last_end.count == 3);
 
-            match (
+            // i love match match
+            match match (
                 next_ty(last_end.ty),
                 self.moves.last().cloned().map(|m| m.ty),
             ) {
-                (Some(ty), Some(ty2)) if ty == ty2 => match next_ty(ty) {
-                    Some(ty) => {
-                        let m = Move333 { ty, count: 1 };
-                        self.add_move(m);
-                        true
-                    }
-                    None => {
-                        if self.next_state() {
-                            self.choose_new_move();
-                            true
-                        } else {
-                            false
-                        }
-                    }
-                },
-                (Some(ty), _) => {
+                (Some(ty), Some(ty2)) if ty == ty2.opposite() => next_ty(ty).and_then(next_ty),
+                (Some(ty), Some(ty2)) if ty == ty2 => next_ty(ty),
+                (Some(ty), _) => Some(ty),
+                (None, _) => None,
+            } {
+                Some(ty) => {
                     let m = Move333 { ty, count: 1 };
                     self.add_move(m);
                     true
                 }
-                (None, _) => {
+                None => {
                     if self.next_state() {
                         self.choose_new_move();
                         true
