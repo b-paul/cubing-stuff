@@ -25,12 +25,12 @@ fn is_solved(c: &CubieCube) -> bool {
     use CornerTwist as CT;
     #[rustfmt::skip]
     const COS: [[CornerTwist; 8]; 3] = [[CT::Oriented; 8],
-    [CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise],
-    [CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise]];
+    [CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise],
+    [CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise, CT::AntiClockwise, CT::Clockwise]];
 
     // this is just UD co atm lol
     //Axis::AXES.iter().any(|&a| COS.contains(&c.axis_co(a)))
-    COS.contains(&c.axis_co(Axis::UD))
+    COS.contains(&c.axis_co(Axis::FB))
 }
 
 /// Finds linear dr-xs solutions (on the normal side of a scramble) with an iterator interface.
@@ -85,8 +85,8 @@ impl LinearSolver {
             // Don't dupe R moves
             Some(m) if m.ty == T::R => self.add_move(mv!(L, 1)),
             // We never check L R because we'll do R L instead
-            // hence we skip straight to L F
-            Some(m) if m.ty == T::L => self.add_move(mv!(F, 1)),
+            // hence we skip straight to L U
+            Some(m) if m.ty == T::L => self.add_move(mv!(U, 1)),
             _ => self.add_move(mv!(R, 1)),
         }
     }
@@ -162,11 +162,17 @@ impl Iterator for LinearSolver {
 
     fn next(&mut self) -> Option<Self::Item> {
         while self.depth <= self.max_depth {
-            while self.next_state() {
+            // cursed do while loop
+            while {
                 if is_solved(&self.cube) {
-                    return Some(MoveSequence(self.moves.clone()));
+                    let mvs = self.moves.clone();
+                    if !self.next_state() {
+                        self.increase_depth();
+                    }
+                    return Some(MoveSequence(mvs));
                 }
-            }
+                self.next_state()
+            } {}
             self.increase_depth();
         }
         None

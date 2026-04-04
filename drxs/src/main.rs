@@ -61,6 +61,6 @@ fn main() {
     args.max.inspect(|&d| solver.set_max_depth(d));
 
     for sol in solver {
-        println!("{sol:?}");
+        println!("{sol}");
     }
 }
