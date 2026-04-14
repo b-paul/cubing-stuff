@@ -2,7 +2,6 @@
 
 members = [
     "drxs",
-    "fmc-trainers",
     "generator-solver",
     "pin-orders",
 ]
