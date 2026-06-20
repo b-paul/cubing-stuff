@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "bandage",
     "drxs",
     "generator-solver",
     "pin-orders",

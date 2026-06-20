@@ -1,0 +1,7 @@
+[package]
+name = "bandage"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cube-lib = { git = "https://github.com/b-paul/cube-lib", rev = "0cc747167b503c1a0cced57c1b43f7379981ae87" }
